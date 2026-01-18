@@ -1,4 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
@@ -14,6 +16,7 @@ import {
 type StatType = 'atrasos' | 'linhas' | 'colunas' | 'pares' | 'impares' | 'primos' | 'fibonacci' | 'repeticoes' | 'sequencia' | 'soma' | 'ciclos';
 
 export default function EstatisticasScreen() {
+    const router = useRouter();
     const [stats, setStats] = useState<any[]>([]);
     const [statType, setStatType] = useState<StatType>('atrasos');
     const [modalVisible, setModalVisible] = useState(false);
@@ -363,31 +366,42 @@ export default function EstatisticasScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.topHeader}>
+            {/* HEADER SUPERIOR (ROXO CLARO) */}
+            <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.headerTitle}>LF</Text>
-                    <Text style={styles.headerArrow}>▼</Text>
+                    <TouchableOpacity onPress={() => router.back()}><Ionicons name="chevron-back" size={28} color="#FFF" /></TouchableOpacity>
+                    <View style={styles.selectorContainer}>
+                        <View style={styles.selectorTextRow}>
+                            <Text style={styles.headerTitle}>LF</Text>
+                            <View style={styles.triangle} />
+                        </View>
+                        <View style={styles.selectorUnderline} />
+                    </View>
                 </View>
-                <View style={styles.headerIcons}>
-                    <TouchableOpacity onPress={() => setModalVisible(true)}><Text style={styles.icon}>✨</Text></TouchableOpacity>
-                    <Text style={styles.icon}>🔍</Text>
-                    <Text style={styles.icon}>%</Text>
+                <View style={styles.headerRight}>
+                    <TouchableOpacity onPress={() => setModalVisible(true)}><Ionicons name="options-outline" size={26} color="#FFF" /></TouchableOpacity>
+                    <TouchableOpacity><Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} /></TouchableOpacity>
                 </View>
             </View>
 
+            {/* SUB-HEADER DE ÍCONES (BRANCO) */}
+            <View style={styles.subHeader}>
+                <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)')}>
+                    <Ionicons name="logo-usd" size={28} color="#CCC" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/meus-jogos')}>
+                    <Ionicons name="star" size={28} color="#CCC" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/resultados')}>
+                    <Ionicons name="add" size={28} color="#CCC" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.subTabItem, styles.subTabActive]}>
+                    <Ionicons name="stats-chart" size={28} color="#27AE60" />
+                    <View style={styles.activeIndicator} />
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.content}>
-                <View style={styles.iconTabBar}>
-                    <TouchableOpacity style={styles.iconTabItem}><Text style={styles.iconTabTextInactive}>$</Text></TouchableOpacity>
-                    <TouchableOpacity style={styles.iconTabItem}><Text style={styles.iconTabTextInactive}>★</Text></TouchableOpacity>
-                    <TouchableOpacity style={styles.iconTabItem}><Text style={styles.iconTabTextInactive}>+</Text></TouchableOpacity>
-                    <TouchableOpacity style={[styles.iconTabItem, styles.iconTabItemActive]}>
-                        <View style={styles.barsIconContainer}>
-                            <View style={[styles.barIconLine, { height: 12, backgroundColor: '#E74C3C' }]} />
-                            <View style={[styles.barIconLine, { height: 18, backgroundColor: '#E74C3C' }]} />
-                            <View style={[styles.barIconLine, { height: 14, backgroundColor: '#E74C3C' }]} />
-                        </View>
-                    </TouchableOpacity>
-                </View>
 
                 <Text style={styles.rangeInfo}>Estatísticas: Concurso {range.inicio.toString().padStart(3, '0')} até {range.fim}</Text>
                 <View style={styles.sectionTitleBox}>
@@ -470,22 +484,58 @@ export default function EstatisticasScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F3F3F3' },
-    topHeader: { height: 60, backgroundColor: '#7B3F9E', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
+    container: { flex: 1, backgroundColor: '#EEE' },
+    header: {
+        height: 60,
+        backgroundColor: '#A556BE',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 12,
+        paddingTop: 5
+    },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
-    headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-    headerArrow: { color: 'white', fontSize: 10, marginLeft: 4, marginTop: 4 },
-    headerIcons: { flexDirection: 'row', gap: 20 },
-    icon: { fontSize: 22, color: 'white' },
+    selectorContainer: { marginLeft: 20, alignItems: 'center' },
+    selectorTextRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 2 },
+    headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
+    triangle: {
+        width: 0,
+        height: 0,
+        backgroundColor: 'transparent',
+        borderStyle: 'solid',
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderBottomWidth: 10,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderBottomColor: 'white',
+        transform: [{ rotate: '180deg' }],
+        marginLeft: 8,
+        marginBottom: 4
+    },
+    selectorUnderline: { width: 35, height: 2, backgroundColor: 'white', opacity: 0.8 },
+    headerRight: { flexDirection: 'row', alignItems: 'center' },
+    subHeader: {
+        height: 55,
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2
+    },
+    subTabItem: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+    subTabActive: {},
+    activeIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        left: '10%',
+        right: '10%',
+        height: 3,
+        backgroundColor: '#A556BE'
+    },
     content: { flex: 1 },
-    rangeInfo: { padding: 12, fontSize: 14, fontWeight: 'bold', color: '#333', marginTop: 5 },
-    iconTabBar: { flexDirection: 'row', backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#EEE', height: 50 },
-    iconTabItem: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    iconTabItemActive: { borderBottomWidth: 3, borderBottomColor: '#7B3F9E' },
-    iconTabTextInactive: { fontSize: 24, color: '#CCC' },
-    iconTabTextActive: { fontSize: 24, color: '#E74C3C' },
-    barsIconContainer: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, height: 24 },
-    barIconLine: { width: 5, borderRadius: 1 },
     sectionTitleBox: { backgroundColor: '#5D2E7A', padding: 12, marginHorizontal: 5, borderRadius: 4, alignItems: 'center', marginBottom: 10 },
     sectionTitleText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
     chartContainer: { height: 200, flexDirection: 'row', paddingHorizontal: 10, paddingVertical: 20, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#EEE' },
