@@ -849,14 +849,16 @@ export const contarTotalConcursos = async (): Promise<number> => {
 
 // ==================== CONFERÊNCIA ====================
 
-export const obterConferenciaJogo = async (numerosDoJogo: number[]): Promise<{
+
+export const obterConferenciaJogo = async (numerosDoJogo: number[], filtroAcertos: number | null = null): Promise<{
   resumo: { [key: number]: number },
   detalhes: {
     numero_concurso: number,
     data_sorteio: string,
     numeros_sorteados: number[],
     acertos: number
-  }[]
+  }[],
+  totalConcursos: number
 }> => {
   const db = await getDatabase();
   const rows = await db.getAllAsync('SELECT * FROM concursos ORDER BY numero_concurso DESC', []);
@@ -867,8 +869,9 @@ export const obterConferenciaJogo = async (numerosDoJogo: number[]): Promise<{
 
   const jogoSet = new Set(numerosDoJogo);
   const detalhes: any[] = [];
+  const totalConcursos = rows.length;
 
-  rows.forEach((row: any, index: number) => {
+  rows.forEach((row: any) => {
     const sorteados = row.numeros_sorteados.split(',').map(Number);
     const acertos = sorteados.filter((n: number) => jogoSet.has(n)).length;
 
@@ -876,19 +879,31 @@ export const obterConferenciaJogo = async (numerosDoJogo: number[]): Promise<{
       resumo[acertos]++;
     }
 
-    // Retorna apenas os últimos 50 para os detalhes (performance)
-    if (index < 50) {
-      detalhes.push({
-        numero_concurso: row.numero_concurso,
-        data_sorteio: row.data_sorteio,
-        numeros_sorteados: sorteados,
-        acertos: acertos
-      });
+    // Se houver filtro, adiciona se bater com o número. Se não, adiciona os últimos 50.
+    if (filtroAcertos !== null) {
+      if (acertos === filtroAcertos) {
+        detalhes.push({
+          numero_concurso: row.numero_concurso,
+          data_sorteio: row.data_sorteio,
+          numeros_sorteados: sorteados,
+          acertos: acertos
+        });
+      }
+    } else {
+      if (detalhes.length < 50) {
+        detalhes.push({
+          numero_concurso: row.numero_concurso,
+          data_sorteio: row.data_sorteio,
+          numeros_sorteados: sorteados,
+          acertos: acertos
+        });
+      }
     }
   });
 
-  return { resumo, detalhes };
+  return { resumo, detalhes, totalConcursos };
 };
+
 
 // ==================== SEED ====================
 

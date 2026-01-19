@@ -1,359 +1,278 @@
-import { useFocusEffect } from '@react-navigation/native';
-import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
-import { NumerosBola } from '../../components/NumerosBola';
-import { buscarJogo, listarConcursos } from '../../database/operations';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { buscarJogo, obterConferenciaJogo } from '../../database/operations';
 
-interface Jogo {
-  id: number;
-  nome: string;
-  numeros: number[];
-  data_criacao: string;
-}
-
-interface Concurso {
-  id: number;
+interface ConcursoDetalhe {
   numero_concurso: number;
   data_sorteio: string;
   numeros_sorteados: number[];
-}
-
-interface ResultadoComparacao {
-  concurso: Concurso;
-  acertos: number[];
-  totalAcertos: number;
+  acertos: number;
 }
 
 export default function ConsultaScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
-  const { jogoId, simulacao, numeros, nomeSimulacao } = params;
+  const { jogoId, numeros: numerosParam } = params;
 
-  const [jogo, setJogo] = useState<Jogo | null>(null);
-  const [resultados, setResultados] = useState<ResultadoComparacao[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [jogoNome, setJogoNome] = useState('Consulta');
+  const [numerosJogo, setNumerosJogo] = useState<number[]>([]);
   const [resumo, setResumo] = useState<{ [key: number]: number }>({});
-  const [loading, setLoading] = useState(!!jogoId || simulacao === 'true');
+  const [detalhes, setDetalhes] = useState<ConcursoDetalhe[]>([]);
+  const [totalConcursosNoDb, setTotalConcursosNoDb] = useState(0);
 
-  useFocusEffect(
-    useCallback(() => {
-      const isSimulacao = simulacao === 'true' || simulacao === true;
-      const temDados = !!jogoId || (isSimulacao && !!numeros);
+  // FILTRO
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [filtro, setFiltro] = useState<number | null>(null);
 
-      if (temDados) {
-        setLoading(true);
-        carregarDados();
-      } else {
-        setLoading(false);
-        setJogo(null);
-        setResultados([]);
-      }
-    }, [jogoId, simulacao, numeros, nomeSimulacao])
-  );
+  useEffect(() => {
+    carregarDados();
+  }, [jogoId, filtro]);
 
   const carregarDados = async () => {
     try {
-      setResultados([]); // Limpa resultados anteriores
-      setResumo({});
-      setJogo(null); // Limpa o jogo anterior
-      let jogoDb: any = null;
+      let nums: number[] = [];
 
-      const isSimulacao = simulacao === 'true' || simulacao === true;
-
-      if (isSimulacao && numeros) {
-        // Modo Simulação: usa os números vindos da tela de criação
-        const listaNumeros = String(numeros).split(',').map(Number).filter(n => !isNaN(n));
-
-        if (listaNumeros.length >= 15) {
-          jogoDb = {
-            id: 0,
-            nome: (nomeSimulacao as string) || 'Simulação de Jogo',
-            numeros: listaNumeros,
-            data_criacao: new Date().toISOString(),
-          };
+      if (jogoId) {
+        const jogo = await buscarJogo(Number(jogoId));
+        if (jogo) {
+          setJogoNome(jogo.nome);
+          nums = jogo.numeros;
         }
-      } else if (jogoId) {
-        // Modo Normal: busca no banco de dados apenas se tiver o ID
-        const idNum = Number(jogoId);
-        if (!isNaN(idNum)) {
-          jogoDb = await buscarJogo(idNum);
-        }
+      } else if (numerosParam) {
+        setJogoNome('Consulta');
+        nums = (numerosParam as string).split(',').map(Number);
       }
 
-      if (!jogoDb) {
-        setLoading(false);
-        return;
+      if (nums.length > 0) {
+        setNumerosJogo([...nums].sort((a, b) => a - b));
+        const data = await obterConferenciaJogo(nums, filtro);
+        setResumo(data.resumo);
+        setDetalhes(data.detalhes);
+        setTotalConcursosNoDb(data.totalConcursos);
       }
-
-      const concursos = await listarConcursos();
-      const jogoNumeros = jogoDb.numeros;
-      const jogoSet = new Set(jogoNumeros);
-
-      const resultadosComparacao = concursos
-        .filter(c => c.numeros_sorteados.length >= 15) // Apenas concursos válidos
-        .map((concurso) => {
-          // Pega apenas as 15 primeiras dezenas e remove duplicatas se houver
-          const dezenasOficiais = Array.from(new Set(concurso.numeros_sorteados.slice(0, 15)));
-
-          const acertos = dezenasOficiais.filter((num) => jogoSet.has(num));
-
-          return {
-            concurso: {
-              ...concurso,
-              numeros_sorteados: dezenasOficiais
-            },
-            acertos,
-            totalAcertos: acertos.length,
-          };
-        });
-
-      const resumoCalc: { [key: number]: number } = {};
-
-      // Inicializar o resumo com zeros de 11 até 15
-      for (let i = 11; i <= 15; i++) {
-        resumoCalc[i] = 0;
-      }
-
-      resultadosComparacao.forEach((resultado) => {
-        const total = resultado.totalAcertos;
-        // Agora contamos qualquer acerto a partir de 11
-        if (total >= 11) {
-          resumoCalc[total] = (resumoCalc[total] || 0) + 1;
-        }
-      });
-
-      setJogo(jogoDb as Jogo);
-      setResultados(resultadosComparacao);
-      setResumo(resumoCalc);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error('Erro ao carregar consulta:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const [ano, mes, dia] = dateStr.split('-');
+      return `${dia}/${mes}/${ano}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleSelectFiltro = (val: number | null) => {
+    setFiltro(val);
+    setModalVisivel(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#7B3F9E' />
+        <ActivityIndicator size="large" color="#A556BE" />
         <Text style={styles.loadingText}>Processando resultados...</Text>
       </View>
     );
   }
 
-  if (!jogoId && simulacao !== 'true') {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Selecione um jogo na aba "Meus Jogos" ou use o botão Consultar.</Text>
-      </View>
-    );
-  }
-
-  if (!jogo) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>Jogo não encontrado no banco de dados.</Text>
-      </View>
-    );
-  }
-
-  const renderHeader = () => (
-    <View style={styles.headerContent}>
-      <View style={styles.jogoCard}>
-        <Text style={styles.jogoNome}>{jogo?.nome}</Text>
-        <NumerosBola numeros={jogo?.numeros || []} tamanho={36} />
-      </View>
-
-      <View style={styles.resumoCard}>
-        <View style={styles.resumoHeaderRow}>
-          <Text style={styles.resumoTitle}>📊 Resumo de Acertos</Text>
-          <Text style={styles.totalConcursosText}>{resultados.length} concursos</Text>
-        </View>
-        <View style={styles.resumoTable}>
-          {Object.keys(resumo)
-            .map(Number)
-            .sort((a, b) => b - a)
-            .map((qtd) => (
-              <View key={qtd} style={styles.resumoRow}>
-                <Text style={styles.resumoLabel}>{qtd} acertos:</Text>
-                <Text style={styles.resumoValue}>{resumo[qtd] || 0}</Text>
-              </View>
-            ))}
-        </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>Histórico de Concursos</Text>
-    </View>
-  );
-
-  const renderItem = ({ item }: { item: ResultadoComparacao }) => (
-    <View style={styles.concursoCard}>
-      <View style={styles.concursoHeader}>
-        <Text style={styles.concursoNumero}>
-          Concurso {item.concurso.numero_concurso}
-        </Text>
-        <Text style={styles.concursoData}>
-          {new Date(item.concurso.data_sorteio + 'T00:00:00').toLocaleDateString('pt-BR')}
-        </Text>
-      </View>
-
-      <NumerosBola
-        numeros={item.concurso.numeros_sorteados}
-        acertos={item.acertos}
-        tamanho={36}
-      />
-
-      <View style={styles.acertosContainer}>
-        <Text style={styles.acertosText}>
-          {item.totalAcertos} acerto{item.totalAcertos !== 1 ? 's' : ''}
-        </Text>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      <FlatList
-        data={resultados}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.concurso.numero_concurso.toString()}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-      />
+      {/* HEADER FIXO NO TOPO */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color="#FFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Consulta de Jogo</Text>
+        <TouchableOpacity onPress={() => setModalVisivel(true)}>
+          <Ionicons name="filter" size={26} color="#FFF" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* CARD DO JOGO */}
+        <View style={styles.jogoCard}>
+          <Text style={styles.jogoNome}>{jogoNome}</Text>
+          <View style={styles.bolinhasContainer}>
+            {numerosJogo.map((num, idx) => (
+              <View key={idx} style={styles.bolinhaJogo}>
+                <Text style={styles.bolinhaJogoText}>{num.toString().padStart(2, '0')}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* RESUMO ACERTOS (CARD ROXO) */}
+        <View style={styles.resumoContainer}>
+          <View style={styles.resumoHeader}>
+            <View style={styles.resumoHeaderLeft}>
+              <View style={styles.statsIconBox}>
+                <Ionicons name="stats-chart" size={16} color="#FFF" />
+              </View>
+              <Text style={styles.resumoTitleText}>Resumo de Acertos</Text>
+            </View>
+            <Text style={styles.resumoCountText}>{totalConcursosNoDb} concursos</Text>
+          </View>
+
+          <View style={styles.resumoCardPurple}>
+            {[15, 14, 13, 12, 11].map(n => (
+              <View key={n} style={styles.resumoBand}>
+                <Text style={styles.resumoBandLabel}>{n} acertos:</Text>
+                <Text style={styles.resumoBandValue}>{resumo[n] || 0}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* HISTORICO */}
+        <Text style={styles.historicoTitle}>Histórico de Concursos</Text>
+
+        {totalConcursosNoDb === 0 ? (
+          <View style={styles.avisoBox}>
+            <Ionicons name="cloud-download-outline" size={50} color="#CCC" />
+            <Text style={styles.avisoText}>Sincronize os dados primeiro para ver o histórico!</Text>
+          </View>
+        ) : detalhes.length === 0 ? (
+          <Text style={styles.noResults}>Nenhum concurso encontrado para {filtro} acertos.</Text>
+        ) : (
+          detalhes.map((item, idx) => (
+            <View key={idx} style={styles.concursoCard}>
+              <View style={styles.concursoHeaderCard}>
+                <Text style={styles.concursoNumText}>Concurso {item.numero_concurso}</Text>
+                <Text style={styles.concursoDateText}>{formatDate(item.data_sorteio)}</Text>
+              </View>
+
+              <View style={styles.bolinhasHistRow}>
+                {item.numeros_sorteados.map((num, i) => {
+                  const isActive = numerosJogo.includes(num);
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        styles.bolinhaSmall,
+                        isActive ? styles.bolinhaAtiva : styles.bolinhaInativa
+                      ]}
+                    >
+                      <Text style={[styles.bolinhaSmallText, isActive ? { color: '#FFF' } : { color: '#333' }]}>
+                        {num.toString().padStart(2, '0')}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              <View style={styles.concursoFooter}>
+                <Text style={styles.acertosDestaque}>{item.acertos} acertos</Text>
+              </View>
+            </View>
+          ))
+        )}
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+
+      {/* MODAL DE FILTRO */}
+      <Modal visible={modalVisivel} transparent={true} animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisivel(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecione uma Opção</Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <TouchableOpacity style={styles.modalOption} onPress={() => handleSelectFiltro(null)}>
+                <Text style={styles.modalOptionText}>Todos</Text>
+              </TouchableOpacity>
+              {[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5].map(n => (
+                <TouchableOpacity key={n} style={styles.modalOption} onPress={() => handleSelectFiltro(n)}>
+                  <Text style={styles.modalOptionText}>{n} acertos</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
+  container: { flex: 1, backgroundColor: '#EEE' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 10, color: '#A556BE', fontWeight: 'bold' },
+  header: {
+    height: 60,
+    backgroundColor: '#A556BE',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingTop: 5
   },
-  listContent: {
-    padding: 16,
-  },
-  headerContent: {
-    marginBottom: 8,
-  },
-  content: {
-    padding: 16,
-  },
-  loadingContainer: {
-    flex: 1,
+  headerTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  content: { flex: 1, padding: 12 },
+  jogoCard: { backgroundColor: '#FFF', padding: 12, borderRadius: 8, marginBottom: 15, elevation: 2 },
+  jogoNome: { fontSize: 15, fontWeight: 'bold', color: '#000', marginBottom: 10 },
+  bolinhasContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  bolinhaJogo: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#CCC',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#999',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  jogoCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  jogoNome: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#7B3F9E',
-  },
-  resumoCard: {
-    backgroundColor: '#7B3F9E',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  resumoHeaderRow: {
+  bolinhaJogoText: { fontSize: 12, fontWeight: 'bold', color: '#333' },
+  resumoContainer: { backgroundColor: '#FFF', borderRadius: 12, padding: 10, marginBottom: 20, elevation: 2 },
+  resumoHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  resumoHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statsIconBox: { backgroundColor: '#7B3F9E', padding: 4, borderRadius: 4 },
+  resumoTitleText: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  resumoCountText: { fontSize: 11, color: '#999' },
+  resumoCardPurple: { backgroundColor: '#7B3F9E', borderRadius: 8, overflow: 'hidden' },
+  resumoBand: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)'
+  },
+  resumoBandLabel: { color: '#FFF', fontSize: 14, fontWeight: 'bold' },
+  resumoBandValue: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
+  historicoTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 12 },
+  concursoCard: { backgroundColor: '#FFF', borderRadius: 8, padding: 12, marginBottom: 10, elevation: 1 },
+  concursoHeaderCard: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  concursoNumText: { fontSize: 15, fontWeight: 'bold', color: '#333' },
+  concursoDateText: { fontSize: 13, color: '#999' },
+  bolinhasHistRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  bolinhaSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EEE'
   },
-  resumoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  totalConcursosText: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  resumoTable: {
-    gap: 8,
-  },
-  resumoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 8,
-    borderRadius: 6,
-  },
-  resumoLabel: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  resumoValue: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#333',
-  },
-  concursoCard: {
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  concursoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  concursoNumero: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  concursoData: {
-    fontSize: 14,
-    color: '#666',
-  },
-  acertosContainer: {
-    marginTop: 12,
-    alignItems: 'flex-end',
-  },
-  acertosText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#7B3F9E',
-  },
+  bolinhaAtiva: { backgroundColor: '#7B3F9E', borderColor: '#7B3F9E' },
+  bolinhaInativa: { backgroundColor: '#FFF' },
+  bolinhaSmallText: { fontSize: 11, fontWeight: 'bold' },
+  concursoFooter: { alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: '#F5F5F5', paddingTop: 8 },
+  acertosDestaque: { fontSize: 15, fontWeight: 'bold', color: '#7B3F9E' },
+  noResults: { textAlign: 'center', color: '#999', marginTop: 20 },
+  avisoBox: { alignItems: 'center', padding: 40 },
+  avisoText: { textAlign: 'center', color: '#999', marginTop: 15, fontSize: 14 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: '80%', maxHeight: '70%', backgroundColor: '#FFF', borderRadius: 8, padding: 20, elevation: 5 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, color: '#000' },
+  modalOption: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#EEE' },
+  modalOptionText: { fontSize: 15, color: '#333' }
 });
