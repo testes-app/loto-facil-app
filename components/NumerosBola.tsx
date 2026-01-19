@@ -6,13 +6,15 @@ interface NumerosBolaProps {
   acertos?: number[];
   mostrarAcertos?: boolean;
   tamanho?: number;
+  tema?: 'roxo' | 'claro';
 }
 
 export const NumerosBola: React.FC<NumerosBolaProps> = ({
   numeros,
   acertos = [],
   mostrarAcertos = false,
-  tamanho = 40
+  tamanho = 32,
+  tema = 'claro'
 }) => {
   const listaNumeros = typeof numeros === 'string'
     ? numeros.split(',').map(n => Number(n.trim())).filter(n => !isNaN(n))
@@ -29,10 +31,15 @@ export const NumerosBola: React.FC<NumerosBolaProps> = ({
             style={[
               styles.bolinha,
               { width: tamanho, height: tamanho, borderRadius: tamanho / 2 },
-              mostrarAcertos ? (isAcerto ? styles.bolinhaAcerto : styles.bolinhaErro) : styles.bolinhaAcerto,
+              tema === 'roxo' ? styles.bolinhaRoxa : styles.bolinhaClara,
+              mostrarAcertos && (isAcerto ? styles.bolinhaAcerto : styles.bolinhaErro)
             ]}
           >
-            <Text style={[styles.numeroText, { fontSize: tamanho * 0.45 }]}>
+            <Text style={[
+              styles.numeroText,
+              { fontSize: tamanho * 0.45 },
+              tema === 'claro' && !mostrarAcertos && { color: '#333' }
+            ]}>
               {num.toString().padStart(2, '0')}
             </Text>
           </View>
@@ -46,8 +53,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
+    gap: 6,
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   bolinha: {
@@ -58,12 +65,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1,
+    borderWidth: 1,
+    borderColor: '#EEE'
+  },
+  bolinhaRoxa: {
+    backgroundColor: '#7B3F9E',
+  },
+  bolinhaClara: {
+    backgroundColor: '#FFF',
   },
   bolinhaAcerto: {
     backgroundColor: '#7B3F9E',
   },
   bolinhaErro: {
-    backgroundColor: '#CCCCCC',
+    backgroundColor: '#F0F0F0',
   },
   numeroText: {
     color: 'white',

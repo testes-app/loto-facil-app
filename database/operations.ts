@@ -846,7 +846,52 @@ export const contarTotalConcursos = async (): Promise<number> => {
   return (result as any)?.total || 0;
 };
 
+
+// ==================== CONFERÊNCIA ====================
+
+export const obterConferenciaJogo = async (numerosDoJogo: number[]): Promise<{
+  resumo: { [key: number]: number },
+  detalhes: {
+    numero_concurso: number,
+    data_sorteio: string,
+    numeros_sorteados: number[],
+    acertos: number
+  }[]
+}> => {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync('SELECT * FROM concursos ORDER BY numero_concurso DESC', []);
+
+  const resumo: { [key: number]: number } = {
+    15: 0, 14: 0, 13: 0, 12: 0, 11: 0, 10: 0, 9: 0, 8: 0, 7: 0, 6: 0, 5: 0
+  };
+
+  const jogoSet = new Set(numerosDoJogo);
+  const detalhes: any[] = [];
+
+  rows.forEach((row: any, index: number) => {
+    const sorteados = row.numeros_sorteados.split(',').map(Number);
+    const acertos = sorteados.filter((n: number) => jogoSet.has(n)).length;
+
+    if (acertos >= 5 && acertos <= 15) {
+      resumo[acertos]++;
+    }
+
+    // Retorna apenas os últimos 50 para os detalhes (performance)
+    if (index < 50) {
+      detalhes.push({
+        numero_concurso: row.numero_concurso,
+        data_sorteio: row.data_sorteio,
+        numeros_sorteados: sorteados,
+        acertos: acertos
+      });
+    }
+  });
+
+  return { resumo, detalhes };
+};
+
 // ==================== SEED ====================
+
 
 export const popularConcursosIniciais = async (): Promise<void> => {
   const db = await getDatabase();

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { JogoCard } from '../../components/JogoCard';
-import { deletarJogo, listarJogos } from '../../database/operations';
+import { buscarUltimoConcurso, deletarJogo, listarJogos } from '../../database/operations';
 
 interface Jogo {
   id: number;
@@ -17,12 +17,22 @@ export default function MeusJogosScreen() {
   const router = useRouter();
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [jogoSelecionadoId, setJogoSelecionadoId] = useState<number | null>(null);
+  const [concursoAlvo, setConcursoAlvo] = useState<number>(3590); // Default ou dinâmico
 
   useFocusEffect(
     useCallback(() => {
       carregarJogos();
+      carregarUltimoConcurso();
     }, [])
   );
+
+  const carregarUltimoConcurso = async () => {
+    try {
+      const ultimo = await buscarUltimoConcurso();
+      if (ultimo) setConcursoAlvo(ultimo.numero_concurso);
+    } catch (e) { }
+  };
 
   const carregarJogos = async () => {
     try {
@@ -47,6 +57,7 @@ export default function MeusJogosScreen() {
           onPress: async () => {
             try {
               await deletarJogo(id);
+              setJogoSelecionadoId(null);
               carregarJogos();
             } catch (error) {
               Alert.alert('Erro', 'Não foi possível deletar o jogo.');
@@ -55,6 +66,20 @@ export default function MeusJogosScreen() {
         },
       ]
     );
+  };
+
+  const handleSelecionar = (id: number) => {
+    if (jogoSelecionadoId === id) {
+      setJogoSelecionadoId(null);
+    } else {
+      setJogoSelecionadoId(id);
+    }
+  };
+
+  const handleConsultar = () => {
+    if (jogoSelecionadoId) {
+      router.push({ pathname: '/consulta', params: { jogoId: jogoSelecionadoId } });
+    }
   };
 
   return (
@@ -66,13 +91,13 @@ export default function MeusJogosScreen() {
           <View style={styles.selectorContainer}>
             <View style={styles.selectorTextRow}>
               <Text style={styles.headerTitle}>LF</Text>
-              <View style={styles.triangle} />
+              <Ionicons name="caret-down" size={16} color="#FFF" style={{ marginLeft: 5, marginBottom: 2 }} />
             </View>
             <View style={styles.selectorUnderline} />
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={() => router.push('/(tabs)')}><Ionicons name="search-outline" size={26} color="#FFF" /></TouchableOpacity>
+          <TouchableOpacity><Ionicons name="search-outline" size={26} color="#FFF" /></TouchableOpacity>
           <TouchableOpacity><Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} /></TouchableOpacity>
         </View>
       </View>
@@ -86,16 +111,32 @@ export default function MeusJogosScreen() {
           <Ionicons name="star" size={28} color="#27AE60" />
           <View style={styles.activeIndicator} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/resultados')}>
-          <Ionicons name="add" size={28} color="#CCC" />
+        <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)')}>
+          <Ionicons name="add" size={32} color="#CCC" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/estatisticas')}>
           <Ionicons name="stats-chart" size={28} color="#999" />
         </TouchableOpacity>
       </View>
 
+      {/* SELETOR DE CONCURSO (BARRA CINZA) */}
+      <View style={styles.concursoSelectorRow}>
+        <Text style={styles.concursoLabel}>Concurso:</Text>
+        <View style={styles.concursoBox}>
+          <TouchableOpacity onPress={() => setConcursoAlvo(prev => prev - 1)}>
+            <Ionicons name="chevron-down" size={24} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.concursoNumber}>{concursoAlvo}</Text>
+          <TouchableOpacity onPress={() => setConcursoAlvo(prev => prev + 1)}>
+            <Ionicons name="chevron-up" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Meus Jogos</Text>
+        <Text style={styles.sectionTitle}>
+          Meus Jogos: {jogoSelecionadoId ? '1 jogo selecionado' : ''}
+        </Text>
 
         {loading ? (
           <ActivityIndicator size="large" color="#A556BE" style={{ marginTop: 50 }} />
@@ -103,7 +144,7 @@ export default function MeusJogosScreen() {
           <View style={styles.emptyBox}>
             <Ionicons name="document-text-outline" size={60} color="#CCC" />
             <Text style={styles.emptyText}>Você ainda não salvou nenhum jogo.</Text>
-            <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(tabs)/resultados')}>
+            <TouchableOpacity style={styles.createBtn} onPress={() => router.push('/(tabs)')}>
               <Text style={styles.createBtnText}>CRIAR AGORA</Text>
             </TouchableOpacity>
           </View>
@@ -114,13 +155,29 @@ export default function MeusJogosScreen() {
               id={jogo.id}
               nome={jogo.nome}
               numeros={jogo.numeros}
-              selecionado={false}
-              onPress={() => router.push({ pathname: '/consulta', params: { jogoId: jogo.id } })}
+              selecionado={jogoSelecionadoId === jogo.id}
+              onPress={() => handleSelecionar(jogo.id)}
               onDelete={() => handleDeletar(jogo.id)}
             />
           ))
         )}
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* BOTÕES FLUTUANTES (FAB) */}
+      {jogoSelecionadoId && (
+        <View style={styles.fabContainer}>
+          <TouchableOpacity style={styles.fabButton} onPress={handleConsultar}>
+            <Ionicons name="search" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.fabButton, { marginTop: 15 }]}
+            onPress={() => handleDeletar(jogoSelecionadoId)}
+          >
+            <Ionicons name="trash" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -138,24 +195,9 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   selectorContainer: { marginLeft: 20, alignItems: 'center' },
-  selectorTextRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 2 },
+  selectorTextRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-  triangle: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderBottomWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: 'white',
-    transform: [{ rotate: '180deg' }],
-    marginLeft: 8,
-    marginBottom: 4
-  },
-  selectorUnderline: { width: 35, height: 2, backgroundColor: 'white', opacity: 0.8 },
+  selectorUnderline: { width: 40, height: 2, backgroundColor: 'white', opacity: 0.8 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   subHeader: {
     height: 55,
@@ -177,10 +219,51 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: '#A556BE'
   },
-  content: { flex: 1, padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#000', marginBottom: 20 },
+  concursoSelectorRow: {
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DDD'
+  },
+  concursoLabel: { fontSize: 18, fontWeight: 'bold', color: '#000', marginRight: 15 },
+  concursoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#CCC',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    minWidth: 150,
+    justifyContent: 'space-between'
+  },
+  concursoNumber: { fontSize: 18, fontWeight: 'bold', color: '#333', paddingVertical: 5 },
+  content: { flex: 1, padding: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 15 },
   emptyBox: { alignItems: 'center', marginTop: 100 },
   emptyText: { color: '#999', fontSize: 16, marginTop: 15, marginBottom: 20 },
   createBtn: { backgroundColor: '#A556BE', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 4 },
-  createBtnText: { color: '#FFF', fontWeight: 'bold' }
+  createBtnText: { color: '#FFF', fontWeight: 'bold' },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    alignItems: 'center'
+  },
+  fabButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#6A2A88',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4
+  }
 });
