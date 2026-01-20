@@ -25,6 +25,12 @@
 5.  **Limpeza de Código**:
     - Padronização de nomes e imports.
 
+6.  **Guardião de Jogos Repetidos**:
+    - **Alerta em Tempo Real**: Implementação de verificação instantânea na tela "Criar Jogo".
+    - **Segurança**: Impede (ou alerta) o usuário caso tente salvar um jogo idêntico a um sorteio passado.
+    - **Visual**: Integração com o Termômetro de Qualidade (Alerta Vermelho).
+    - **Correções**: Ajuste na lógica de estatísticas de Ciclos para evitar quebras.
+
 ### 🔍 Onde Paramos (Próximos Passos)
 1.  **Refinamento de UX**: Melhorar animações ao conferir jogos.
 2.  **Dashboard**: Adicionar mais insights na tela inicial.

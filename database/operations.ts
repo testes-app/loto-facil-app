@@ -118,6 +118,31 @@ export const listarConcursos = async (): Promise<ConcursoDb[]> => {
   }));
 };
 
+export const verificarJogoRepetido = async (numerosDoJogo: number[]): Promise<{ repetido: boolean; concurso?: number; data?: string }> => {
+  const db = getDatabase();
+  const numerosStr = numerosDoJogo.sort((a, b) => a - b).join(',');
+
+  // Check if getDatabase returns a promise or instance directly from import.
+  // Looking at code line 55: const db = await getDatabase();
+  // So I must await.
+  const database = await db;
+
+  const row = await database.getFirstAsync(
+    'SELECT numero_concurso, data_sorteio FROM concursos WHERE numeros_sorteados = ?',
+    [numerosStr]
+  );
+
+  if (row) {
+    return {
+      repetido: true,
+      concurso: (row as any).numero_concurso,
+      data: (row as any).data_sorteio
+    };
+  }
+
+  return { repetido: false };
+};
+
 export const buscarConcurso = async (numero: number): Promise<ConcursoDb | null> => {
   if (isNaN(numero) || numero <= 0) return null;
 
@@ -788,32 +813,40 @@ export const obterEstatisticasCiclosDistribuicao = async (): Promise<{
   concursoInicio: number,
   concursoFim: number
 }[]> => {
-  const ciclos = await obterEstatisticasCiclosHistorico();
-  const ciclosFechados = ciclos.filter(c => c.numerosFaltantes.length === 0);
+  const dados = await obterEstatisticasCiclosHistorico();
+  // Filtrar apenas ciclos fechados (que tem fim diferente de '-')
+  const ciclosFechados = dados.historico.filter(c => c.fim !== '-' && typeof c.fim === 'number');
 
-  const counts: { [key: number]: { ocorrencias: number, ultimoCiclo: number, concursos: number[] } } = {};
+  const counts: { [key: number]: { ocorrencias: number, ultimoFim: number } } = {};
 
   ciclosFechados.forEach(c => {
-    const qtd = c.concursos.length;
-    if (!counts[qtd]) counts[qtd] = { ocorrencias: 0, ultimoCiclo: 0, concursos: [] };
+    const qtd = c.quantidade;
+    if (!counts[qtd]) counts[qtd] = { ocorrencias: 0, ultimoFim: 0 };
+
     counts[qtd].ocorrencias++;
-    if (counts[qtd].ultimoCiclo === 0) {
-      counts[qtd].ultimoCiclo = c.cicloId;
-      counts[qtd].concursos = c.concursos;
+    // O histórico vem ordenado do mais recente para o mais antigo?
+    // Na função obterEstatisticasCiclosHistorico: `const h: any[] = [...ciclos].reverse();`
+    // Sim, o primeiro é o mais recente.
+    if (counts[qtd].ultimoFim === 0) {
+      counts[qtd].ultimoFim = c.fim as number;
     }
   });
 
   const total = ciclosFechados.length;
+  // Pegar o range total do histórico
+  const concursoFim = dados.historico.length > 0 && typeof dados.historico[0].fim === 'number' ? dados.historico[0].fim : (dados.historico.length > 1 ? dados.historico[1].fim as number : 0);
+  const concursoInicio = dados.historico.length > 0 ? dados.historico[dados.historico.length - 1].inicio : 0;
+
   return Object.keys(counts).map(key => {
     const q = Number(key);
     return {
       id: q,
       ocorrencias: counts[q].ocorrencias,
-      porcentagem: ((counts[q].ocorrencias / total) * 100).toFixed(2) + '%',
-      ultimoConcurso: counts[q].concursos[counts[q].concursos.length - 1],
+      porcentagem: total > 0 ? ((counts[q].ocorrencias / total) * 100).toFixed(2) + '%' : '0%',
+      ultimoConcurso: counts[q].ultimoFim,
       dezenasUltimoNumeros: [], // Ciclos não mostram dezenas específicas no modal
-      concursoInicio: 1,
-      concursoFim: ciclos[0].cicloId
+      concursoInicio: concursoInicio,
+      concursoFim: Number(concursoFim)
     };
   }).sort((a, b) => a.id - b.id);
 };

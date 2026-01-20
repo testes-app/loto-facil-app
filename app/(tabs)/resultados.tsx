@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { salvarJogo } from '../../database/operations';
+import { salvarJogo, verificarJogoRepetido } from '../../database/operations';
 import { AIStrategy, gerarJogoIA } from '../../services/aiGenerator';
 
 export default function CriarJogoScreen() {
@@ -12,8 +12,23 @@ export default function CriarJogoScreen() {
 
     const [modalVisible, setModalVisible] = useState(false);
     const [loadingAI, setLoadingAI] = useState(false);
+    const [repeticaoCheck, setRepeticaoCheck] = useState<{ repetido: boolean; concurso?: number } | null>(null);
 
     const todosNumeros = Array.from({ length: 25 }, (_, i) => i + 1);
+
+    React.useEffect(() => {
+        const checkRepeticao = async () => {
+            if (numerosSelecionados.length >= 15) {
+                const numerosParaChecar = numerosSelecionados.slice(0, 15);
+                const resultado = await verificarJogoRepetido(numerosParaChecar);
+                setRepeticaoCheck(resultado);
+            } else {
+                setRepeticaoCheck(null);
+            }
+        };
+        const timer = setTimeout(checkRepeticao, 500);
+        return () => clearTimeout(timer);
+    }, [numerosSelecionados]);
 
     const toggleNumero = (num: number) => {
         if (numerosSelecionados.includes(num)) {
@@ -132,34 +147,40 @@ export default function CriarJogoScreen() {
                     const { pares, soma } = stats;
                     const qtd = numerosSelecionados.length;
 
-                    let qualidade = 'neutro'; // neutro, ruim, bom, excelente
+                    let qualidade: 'neutro' | 'ruim' | 'bom' | 'excelente' = 'neutro';
                     let msg = '';
+                    const isRepetido = repeticaoCheck?.repetido;
 
                     if (qtd >= 15) {
-                        // Regra simplificada de ouro da Lotofácil
-                        const paresAceitaveis = [7, 8, 9];
-                        const somaAceitavel = soma >= 180 && soma <= 230;
-
-                        if (paresAceitaveis.includes(pares) && somaAceitavel) {
-                            qualidade = 'excelente';
-                            msg = '🌟 Jogo Profissional!';
-                        } else if (Math.abs(pares - 7.5) > 3 || soma < 160 || soma > 250) {
+                        if (isRepetido) {
                             qualidade = 'ruim';
-                            msg = '⚠️ Muito Desequilibrado';
+                            msg = `⚠️ Já Sorteado! (Conc. ${repeticaoCheck?.concurso})`;
                         } else {
-                            qualidade = 'bom';
-                            msg = '⚖️ Jogo Equilibrado';
+                            // Regra simplificada de ouro da Lotofácil
+                            const paresAceitaveis = [7, 8, 9];
+                            const somaAceitavel = soma >= 180 && soma <= 230;
+
+                            if (paresAceitaveis.includes(pares) && somaAceitavel) {
+                                qualidade = 'excelente';
+                                msg = '🌟 Jogo Profissional!';
+                            } else if (Math.abs(pares - 7.5) > 3 || soma < 160 || soma > 250) {
+                                qualidade = 'ruim';
+                                msg = '⚠️ Muito Desequilibrado';
+                            } else {
+                                qualidade = 'bom';
+                                msg = '⚖️ Jogo Equilibrado';
+                            }
                         }
                     }
 
-                    const bgColors = {
+                    const bgColors: Record<string, string> = {
                         neutro: '#5D2E7A',
-                        ruim: '#C0392B', // Vermelho
-                        bom: '#2980B9', // Azul
-                        excelente: '#27AE60' // Verde
+                        ruim: '#C0392B',
+                        bom: '#2980B9',
+                        excelente: '#27AE60'
                     };
 
-                    const corFundo = bgColors[qualidade as keyof typeof bgColors];
+                    const corFundo = bgColors[qualidade] || bgColors.neutro;
 
                     return (
                         <>
@@ -175,7 +196,7 @@ export default function CriarJogoScreen() {
                                 <View style={[styles.termometroContainer, { borderColor: corFundo }]}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                                         <Ionicons
-                                            name={qualidade === 'excelente' ? 'ribbon' : qualidade === 'ruim' ? 'warning' : 'checkmark-circle'}
+                                            name={isRepetido ? 'alert-circle' : (qualidade === 'excelente' ? 'ribbon' : qualidade === 'ruim' ? 'warning' : 'checkmark-circle')}
                                             size={20}
                                             color={corFundo}
                                             style={{ marginRight: 8 }}

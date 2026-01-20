@@ -5,6 +5,7 @@
 - **Gerador IA**: Algoritmos de "Quentes", "Atrasados" e "Equilibrados" implementados.
 - **Conferência em Lote**: Tela "Meus Jogos" verifica acertos automaticamente.
 - **Lógica Matemática**: Ciclos e Repetições verificados e funcionais.
+- **Guardião de Repetidos**: Sistema de alerta para jogos já sorteados.
 
 ## 🚀 Próximos Passos
 1.  **Testes de Performance**: Verificar comportamento com banco de dados cheio.
