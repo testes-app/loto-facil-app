@@ -14,6 +14,7 @@ interface JogoCardProps {
     acertos: number;
     concurso: number;
   } | null;
+  numerosSorteados?: number[] | null;
 }
 
 export const JogoCard: React.FC<JogoCardProps> = ({
@@ -22,7 +23,8 @@ export const JogoCard: React.FC<JogoCardProps> = ({
   numeros,
   selecionado = false,
   onPress,
-  conferencia
+  conferencia,
+  numerosSorteados
 }) => {
   const getBadgeColor = (acertos: number) => {
     if (acertos === 15) return '#D35400'; // Ouro/Rust
@@ -64,7 +66,13 @@ export const JogoCard: React.FC<JogoCardProps> = ({
       </View>
 
       <View style={styles.numerosPadding}>
-        <NumerosBola numeros={numeros} tema="claro" tamanho={32} />
+        <NumerosBola
+          numeros={numeros}
+          tema="claro"
+          tamanho={32}
+          acertos={numerosSorteados || []}
+          mostrarAcertos={!!numerosSorteados}
+        />
       </View>
     </TouchableOpacity>
   );

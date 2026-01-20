@@ -38,7 +38,10 @@ export const NumerosBola: React.FC<NumerosBolaProps> = ({
             <Text style={[
               styles.numeroText,
               { fontSize: tamanho * 0.45 },
-              tema === 'claro' && !mostrarAcertos && { color: '#333' }
+              // Se for tema claro e não estiver checando acertos -> TEXTO ESCURO
+              tema === 'claro' && !mostrarAcertos && { color: '#333' },
+              // Se estiver checando acertos e NÃO for acerto -> TEXTO CINZA (ERRO)
+              mostrarAcertos && !isAcerto && { color: '#CCC' }
             ]}>
               {num.toString().padStart(2, '0')}
             </Text>
@@ -75,10 +78,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   bolinhaAcerto: {
-    backgroundColor: '#7B3F9E',
+    backgroundColor: '#27AE60', // Verde Sucesso
+    borderColor: '#219150'
   },
   bolinhaErro: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F7F7F7',
+    borderColor: '#EEE',
+    opacity: 0.7
   },
   numeroText: {
     color: 'white',

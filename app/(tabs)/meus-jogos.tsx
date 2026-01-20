@@ -206,6 +206,7 @@ export default function MeusJogosScreen() {
                 numeros={jogo.numeros}
                 selecionado={jogoSelecionadoId === jogo.id}
                 conferencia={conferencia}
+                numerosSorteados={concursoAlvoDados?.numeros_sorteados}
                 onPress={() => handleSelecionar(jogo.id)}
                 onDelete={() => handleDeletar(jogo.id)}
               />
