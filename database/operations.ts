@@ -118,29 +118,44 @@ export const listarConcursos = async (): Promise<ConcursoDb[]> => {
   }));
 };
 
-export const verificarJogoRepetido = async (numerosDoJogo: number[]): Promise<{ repetido: boolean; concurso?: number; data?: string }> => {
-  const db = getDatabase();
-  const numerosStr = numerosDoJogo.sort((a, b) => a - b).join(',');
+// Verifica se o jogo já foi premiado com 15 ou 14 pontos historicamente
+export const verificarHistoricoPremiacao = async (numerosDoJogo: number[]): Promise<{
+  acertos15: number[]; // Lista de concursos com 15 acertos
+  acertos14: number[]; // Lista de concursos com 14 acertos
+}> => {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync('SELECT numero_concurso, numeros_sorteados FROM concursos', []);
 
-  // Check if getDatabase returns a promise or instance directly from import.
-  // Looking at code line 55: const db = await getDatabase();
-  // So I must await.
-  const database = await db;
+  const resultado = {
+    acertos15: [] as number[],
+    acertos14: [] as number[],
+  };
 
-  const row = await database.getFirstAsync(
-    'SELECT numero_concurso, data_sorteio FROM concursos WHERE numeros_sorteados = ?',
-    [numerosStr]
-  );
+  const jogoSet = new Set(numerosDoJogo);
 
-  if (row) {
-    return {
-      repetido: true,
-      concurso: (row as any).numero_concurso,
-      data: (row as any).data_sorteio
-    };
+  // Varredura em memória (rápida para ~3000 registros)
+  for (const row of rows) {
+    const sorteados = (row as any).numeros_sorteados.split(',').map(Number);
+    let acertos = 0;
+
+    for (const n of sorteados) {
+      if (jogoSet.has(n)) {
+        acertos++;
+      }
+    }
+
+    if (acertos === 15) {
+      resultado.acertos15.push((row as any).numero_concurso);
+    } else if (acertos === 14) {
+      resultado.acertos14.push((row as any).numero_concurso);
+    }
   }
 
-  return { repetido: false };
+  // Ordenar decrescente
+  resultado.acertos15.sort((a, b) => b - a);
+  resultado.acertos14.sort((a, b) => b - a);
+
+  return resultado;
 };
 
 export const buscarConcurso = async (numero: number): Promise<ConcursoDb | null> => {

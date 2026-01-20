@@ -25,10 +25,14 @@
 5.  **Limpeza de Código**:
     - Padronização de nomes e imports.
 
-6.  **Guardião de Jogos Repetidos**:
-    - **Alerta em Tempo Real**: Implementação de verificação instantânea na tela "Criar Jogo".
-    - **Segurança**: Impede (ou alerta) o usuário caso tente salvar um jogo idêntico a um sorteio passado.
-    - **Visual**: Integração com o Termômetro de Qualidade (Alerta Vermelho).
+6.  **Guardião de Jogos Repetidos (Evoluído)**:
+    - **Alerta em Tempo Real**: Verificação instantânea na tela "Criar Jogo" contra todo o histórico.
+    - **Detecção Inteligente**:
+        - 🔴 **Vermelho**: Jogo já sorteado (15 pontos) - Mostra o concurso exato.
+        - 🟠 **Laranja**: Jogo já fez 14 pontos - Mostra quantas vezes e último concurso.
+        - 🟢 **Verde**: Jogo profissional e totalmente inédito.
+        - 🔵 **Azul**: Jogo equilibrado e inédito.
+    - **Performance**: Varredura otimizada em memória (~3000 registros em <500ms).
     - **Correções**: Ajuste na lógica de estatísticas de Ciclos para evitar quebras.
 
 ### 🔍 Onde Paramos (Próximos Passos)
