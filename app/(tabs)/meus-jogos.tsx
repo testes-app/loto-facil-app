@@ -99,17 +99,62 @@ export default function MeusJogosScreen() {
       setJogoSelecionadoId(id);
     }
   };
-
   const handleConsultar = () => {
     if (jogoSelecionadoId) {
       router.push({ pathname: '/consulta', params: { jogoId: jogoSelecionadoId } });
     }
   };
+  // Cálculos do Resumo Financeiro
+  const resumoFinanceiro = React.useMemo(() => {
+    if (!concursoAlvoDados || !concursoAlvoDados.numeros_sorteados) return null;
+
+    let custoTotal = 0;
+    let premioTotal = 0;
+    const sorteados = concursoAlvoDados.numeros_sorteados;
+
+    jogos.forEach(jogo => {
+      // Custo (Considerando aposta simples de 15 números = R$ 3,50)
+      custoTotal += 3.50;
+
+      const acertos = jogo.numeros.filter(n => sorteados.includes(n)).length;
+      if (acertos === 11) premioTotal += 7.00;
+      else if (acertos === 12) premioTotal += 14.00;
+      else if (acertos === 13) premioTotal += 35.00;
+      else if (acertos === 14) premioTotal += 1800.00; // Variável
+      else if (acertos === 15) premioTotal += 2000000.00; // Variável
+    });
+
+    return { custoTotal, premioTotal, saldo: premioTotal - custoTotal };
+  }, [jogos, concursoAlvoDados]);
 
   return (
     <View style={styles.container}>
-      {/* HEADER SUPERIOR (ROXO CLARO) */}
-      <View style={styles.header}>
+      {/* ... HEADER ... */}
+      {/* ... SUBHEADER ... */}
+      {/* ... SELETOR ... */}
+
+      {/* CARD DE RESUMO FINANCEIRO */}
+      {jogos.length > 0 && (
+        <View style={[styles.resumoCard, (resumoFinanceiro?.saldo || 0) >= 0 ? styles.resumoLucro : styles.resumoPrejuizo]}>
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Investido</Text>
+            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.custoTotal.toFixed(2) : '0.00'}</Text>
+          </View>
+          <View style={styles.resumoDivider} />
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Prêmios</Text>
+            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.premioTotal.toFixed(2) : '0.00'}</Text>
+          </View>
+          <View style={styles.resumoDivider} />
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Saldo</Text>
+            <Text style={[styles.resumoValue, { fontWeight: 'bold' }]}>
+              {resumoFinanceiro && resumoFinanceiro.saldo >= 0 ? '+' : ''}
+              R$ {resumoFinanceiro ? resumoFinanceiro.saldo.toFixed(2) : '0.00'}
+            </Text>
+          </View>
+        </View>
+      )}      <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}><Ionicons name="chevron-back" size={28} color="#FFF" /></TouchableOpacity>
           <View style={styles.selectorContainer}>
@@ -173,6 +218,28 @@ export default function MeusJogosScreen() {
           <Ionicons name="search" size={20} color="white" />
         </TouchableOpacity>
       </View>
+
+      {/* CARD DE RESUMO FINANCEIRO (NOVO) */}
+      {jogos.length > 0 && (
+        <View style={[styles.resumoCard, (resumoFinanceiro?.saldo || 0) >= 0 ? styles.resumoLucro : styles.resumoPrejuizo]}>
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Investido</Text>
+            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.custoTotal.toFixed(2) : '0.00'}</Text>
+          </View>
+          <View style={styles.resumoDivider} />
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Prêmios</Text>
+            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.premioTotal.toFixed(2) : '0.00'}</Text>
+          </View>
+          <View style={styles.resumoDivider} />
+          <View style={styles.resumoItem}>
+            <Text style={styles.resumoLabel}>Saldo</Text>
+            <Text style={[styles.resumoValue, { fontWeight: 'bold' }]}>
+              {resumoFinanceiro && resumoFinanceiro.saldo >= 0 ? '+' : ''}R$ {resumoFinanceiro ? resumoFinanceiro.saldo.toFixed(2) : '0.00'}
+            </Text>
+          </View>
+        </View>
+      )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>
@@ -327,6 +394,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 10
   },
+  // Resumo Styles (Novo)
+  resumoCard: {
+    flexDirection: 'row',
+    margin: 12,
+    marginBottom: 0,
+    padding: 15,
+    borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  resumoLucro: { backgroundColor: '#E8F5E9', borderLeftWidth: 5, borderLeftColor: '#27AE60' }, // Fundo Verde Claro
+  resumoPrejuizo: { backgroundColor: '#FFEBEE', borderLeftWidth: 5, borderLeftColor: '#C0392B' }, // Fundo Vermelho Claro
+  resumoItem: { alignItems: 'center', flex: 1 },
+  resumoLabel: { fontSize: 12, color: '#555', textTransform: 'uppercase', marginBottom: 2 },
+  resumoValue: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  resumoDivider: { width: 1, height: '80%', backgroundColor: '#CCC' },
+
   content: { flex: 1, padding: 12 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 15 },
   emptyBox: { alignItems: 'center', marginTop: 100 },
