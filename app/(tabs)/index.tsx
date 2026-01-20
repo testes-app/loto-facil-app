@@ -53,17 +53,17 @@ export default function ResultadosScreen() {
       {/* SUB-HEADER DE ÍCONES (BRANCO) */}
       <View style={styles.subHeader}>
         <TouchableOpacity style={[styles.subTabItem, styles.subTabActive]}>
-          <Ionicons name="logo-usd" size={28} color="#27AE60" />
+          <Ionicons name="logo-usd" size={28} color="#A556BE" />
           <View style={styles.activeIndicator} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/meus-jogos')}>
           <Ionicons name="star" size={28} color="#CCC" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/criar-jogo')}>
+        <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/resultados')}>
           <Ionicons name="add" size={28} color="#CCC" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/estatisticas')}>
-          <Ionicons name="stats-chart" size={28} color="#999" />
+          <Ionicons name="stats-chart" size={28} color="#CCC" />
         </TouchableOpacity>
       </View>
 

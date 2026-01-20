@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { JogoCard } from '../../components/JogoCard';
-import { buscarUltimoConcurso, deletarJogo, listarJogos } from '../../database/operations';
+import { buscarConcurso, buscarUltimoConcurso, ConcursoDb, deletarJogo, listarJogos } from '../../database/operations';
 
 interface Jogo {
   id: number;
@@ -18,20 +18,44 @@ export default function MeusJogosScreen() {
   const [jogos, setJogos] = useState<Jogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [jogoSelecionadoId, setJogoSelecionadoId] = useState<number | null>(null);
-  const [concursoAlvo, setConcursoAlvo] = useState<number>(3590); // Default ou dinâmico
+  const [concursoAlvo, setConcursoAlvo] = useState<number>(0);
+  const [concursoAlvoDados, setConcursoAlvoDados] = useState<ConcursoDb | null>(null);
 
   useFocusEffect(
     useCallback(() => {
       carregarJogos();
-      carregarUltimoConcurso();
+      // Se ainda não temos concurso alvo definido, buscar o ultimo
+      if (concursoAlvo === 0) {
+        carregarUltimoConcurso();
+      }
     }, [])
   );
+
+  // Quando o concurso alvo muda (pelo usuário), buscar os dados dele
+  React.useEffect(() => {
+    if (concursoAlvo > 0) {
+      buscarDadosConcurso(concursoAlvo);
+    }
+  }, [concursoAlvo]);
 
   const carregarUltimoConcurso = async () => {
     try {
       const ultimo = await buscarUltimoConcurso();
-      if (ultimo) setConcursoAlvo(ultimo.numero_concurso);
+      if (ultimo) {
+        setConcursoAlvo(ultimo.numero_concurso);
+        // O buscarDadosConcurso será chamado pelo useEffect
+      }
     } catch (e) { }
+  };
+
+  const buscarDadosConcurso = async (numero: number) => {
+    try {
+      const dados = await buscarConcurso(numero);
+      setConcursoAlvoDados(dados);
+    } catch (error) {
+      console.log("Concurso não encontrado no banco local");
+      setConcursoAlvoDados(null);
+    }
   };
 
   const carregarJogos = async () => {
@@ -149,17 +173,27 @@ export default function MeusJogosScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          jogos.map((jogo) => (
-            <JogoCard
-              key={jogo.id}
-              id={jogo.id}
-              nome={jogo.nome}
-              numeros={jogo.numeros}
-              selecionado={jogoSelecionadoId === jogo.id}
-              onPress={() => handleSelecionar(jogo.id)}
-              onDelete={() => handleDeletar(jogo.id)}
-            />
-          ))
+          jogos.map((jogo) => {
+            let conferencia = null;
+            if (concursoAlvoDados && concursoAlvoDados.numeros_sorteados) {
+              const sorteados = concursoAlvoDados.numeros_sorteados; // Já é number[]
+              const acertos = jogo.numeros.filter(n => sorteados.includes(n)).length;
+              conferencia = { acertos, concurso: concursoAlvo };
+            }
+
+            return (
+              <JogoCard
+                key={jogo.id}
+                id={jogo.id}
+                nome={jogo.nome}
+                numeros={jogo.numeros}
+                selecionado={jogoSelecionadoId === jogo.id}
+                conferencia={conferencia}
+                onPress={() => handleSelecionar(jogo.id)}
+                onDelete={() => handleDeletar(jogo.id)}
+              />
+            );
+          })
         )}
         <View style={{ height: 100 }} />
       </ScrollView>

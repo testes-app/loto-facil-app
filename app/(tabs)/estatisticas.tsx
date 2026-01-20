@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import SincronizacaoModal from '../../components/SincronizacaoModal';
 import {
     obterEstatisticasAtrasos,
     obterEstatisticasCiclosHistorico,
@@ -28,6 +29,7 @@ export default function EstatisticasScreen() {
 
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [detailItem, setDetailItem] = useState<any>(null);
+    const [syncModalVisible, setSyncModalVisible] = useState(false);
 
     const carregarStats = useCallback(async () => {
         setLoading(true);
@@ -379,6 +381,9 @@ export default function EstatisticasScreen() {
                     </View>
                 </View>
                 <View style={styles.headerRight}>
+                    <TouchableOpacity onPress={() => setSyncModalVisible(true)} style={{ marginRight: 15 }}>
+                        <Ionicons name="cloud-download-outline" size={26} color="#FFF" />
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => setModalVisible(true)}><Ionicons name="options-outline" size={26} color="#FFF" /></TouchableOpacity>
                     <TouchableOpacity><Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} /></TouchableOpacity>
                 </View>
@@ -479,6 +484,15 @@ export default function EstatisticasScreen() {
                     </View>
                 </View>
             </Modal>
+
+            <SincronizacaoModal
+                visible={syncModalVisible}
+                onClose={() => setSyncModalVisible(false)}
+                onFinish={() => {
+                    setSyncModalVisible(false);
+                    carregarStats(); // Recarregar dados após sync
+                }}
+            />
         </View>
     );
 }

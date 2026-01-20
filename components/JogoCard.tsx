@@ -10,6 +10,10 @@ interface JogoCardProps {
   selecionado?: boolean;
   onPress?: () => void;
   onDelete?: () => void;
+  conferencia?: {
+    acertos: number;
+    concurso: number;
+  } | null;
 }
 
 export const JogoCard: React.FC<JogoCardProps> = ({
@@ -18,7 +22,15 @@ export const JogoCard: React.FC<JogoCardProps> = ({
   numeros,
   selecionado = false,
   onPress,
+  conferencia
 }) => {
+  const getBadgeColor = (acertos: number) => {
+    if (acertos === 15) return '#D35400'; // Ouro/Rust
+    if (acertos === 14) return '#27AE60'; // Verde
+    if (acertos >= 11) return '#2980B9'; // Azul
+    return '#95A5A6'; // Cinza
+  };
+
   return (
     <TouchableOpacity
       style={[styles.card, selecionado && styles.cardSelecionado]}
@@ -32,12 +44,22 @@ export const JogoCard: React.FC<JogoCardProps> = ({
           </View>
           <View style={styles.infoContainer}>
             <Text style={styles.nome}>{nome}</Text>
-            <Text style={styles.data}>Associado em 19/01/2026</Text>
+            {conferencia ? (
+              <View style={[styles.badge, { backgroundColor: getBadgeColor(conferencia.acertos) }]}>
+                <Text style={styles.badgeText}>{conferencia.acertos} ACERTOS (Conc. {conferencia.concurso})</Text>
+              </View>
+            ) : (
+              <Text style={styles.data}>Aguardando conferência...</Text>
+            )}
           </View>
         </View>
 
         <View style={styles.statusIcon}>
-          <Ionicons name="checkmark-circle" size={24} color="#0D47A1" />
+          {conferencia && conferencia.acertos >= 11 ? (
+            <Ionicons name="trophy" size={24} color="#F1C40F" />
+          ) : (
+            <Ionicons name="checkmark-circle" size={24} color="#EEE" />
+          )}
         </View>
       </View>
 
@@ -97,11 +119,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     color: '#000',
+    marginBottom: 2
   },
   data: {
     fontSize: 12,
     color: '#666',
-    marginTop: 2,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    alignSelf: 'flex-start',
+    marginTop: 2
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold'
   },
   statusIcon: {
     marginLeft: 10,

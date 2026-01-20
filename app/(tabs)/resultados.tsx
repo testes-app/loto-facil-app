@@ -1,13 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { salvarJogo } from '../../database/operations';
+import { AIStrategy, gerarJogoIA } from '../../services/aiGenerator';
 
 export default function CriarJogoScreen() {
     const router = useRouter();
     const [nome, setNome] = useState('');
     const [numerosSelecionados, setNumerosSelecionados] = useState<number[]>([]);
+
+    const [modalVisible, setModalVisible] = useState(false);
+    const [loadingAI, setLoadingAI] = useState(false);
 
     const todosNumeros = Array.from({ length: 25 }, (_, i) => i + 1);
 
@@ -23,13 +27,19 @@ export default function CriarJogoScreen() {
         }
     };
 
-    const surpresinha = () => {
-        const nums: number[] = [];
-        while (nums.length < 15) {
-            const r = Math.floor(Math.random() * 25) + 1;
-            if (!nums.includes(r)) nums.push(r);
+    const handleGerarIA = async (strategy: AIStrategy) => {
+        setLoadingAI(true);
+        setModalVisible(false);
+        try {
+            // Se o usuário selecionou mais números manualmente, respeitar, senão usar 15
+            const qtd = numerosSelecionados.length >= 15 ? numerosSelecionados.length : 15;
+            const novosNumeros = await gerarJogoIA(strategy, qtd);
+            setNumerosSelecionados(novosNumeros);
+        } catch (error) {
+            Alert.alert('Erro', 'Falha ao gerar jogo.');
+        } finally {
+            setLoadingAI(false);
         }
-        setNumerosSelecionados(nums.sort((a, b) => a - b));
     };
 
     const handleSalvar = async () => {
@@ -81,7 +91,7 @@ export default function CriarJogoScreen() {
                     </View>
                 </View>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity onPress={surpresinha}><Ionicons name="dice" size={26} color="#FFF" /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => setModalVisible(true)}><Ionicons name="bulb-outline" size={26} color="#FFF" /></TouchableOpacity>
                     <TouchableOpacity><Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} /></TouchableOpacity>
                 </View>
             </View>
@@ -95,11 +105,11 @@ export default function CriarJogoScreen() {
                     <Ionicons name="star" size={28} color="#CCC" />
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.subTabItem, styles.subTabActive]}>
-                    <Ionicons name="add" size={28} color="#27AE60" />
+                    <Ionicons name="add" size={28} color="#A556BE" />
                     <View style={styles.activeIndicator} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.subTabItem} onPress={() => router.push('/(tabs)/estatisticas')}>
-                    <Ionicons name="stats-chart" size={28} color="#999" />
+                    <Ionicons name="stats-chart" size={28} color="#CCC" />
                 </TouchableOpacity>
             </View>
 
@@ -149,6 +159,51 @@ export default function CriarJogoScreen() {
                     <Text style={styles.clearBtnText}>LIMPAR SELEÇÃO</Text>
                 </TouchableOpacity>
             </ScrollView>
+
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Gerador Inteligente</Text>
+
+                        <TouchableOpacity style={styles.modalItem} onPress={() => handleGerarIA('random')}>
+                            <Ionicons name="dice-outline" size={24} color="#7B3F9E" style={{ marginRight: 10 }} />
+                            <View>
+                                <Text style={styles.modalItemTitle}>Surpresinha Aleatória</Text>
+                                <Text style={styles.modalItemDesc}>Números totalmente aleatórios</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalItem} onPress={() => handleGerarIA('most_frequent')}>
+                            <Ionicons name="flame-outline" size={24} color="#E74C3C" style={{ marginRight: 10 }} />
+                            <View>
+                                <Text style={styles.modalItemTitle}>Mais Frequentes</Text>
+                                <Text style={styles.modalItemDesc}>Baseado nos que mais saem (Quentes)</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalItem} onPress={() => handleGerarIA('most_delayed')}>
+                            <Ionicons name="time-outline" size={24} color="#F39C12" style={{ marginRight: 10 }} />
+                            <View>
+                                <Text style={styles.modalItemTitle}>Mais Atrasados</Text>
+                                <Text style={styles.modalItemDesc}>Foca nos que não saem há tempo</Text>
+                            </View>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalItem} onPress={() => handleGerarIA('balanced')}>
+                            <Ionicons name="scale-outline" size={24} color="#3498DB" style={{ marginRight: 10 }} />
+                            <View>
+                                <Text style={styles.modalItemTitle}>Equilibrado</Text>
+                                <Text style={styles.modalItemDesc}>Média de Pares, Ímpares e Soma</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }
@@ -221,5 +276,12 @@ const styles = StyleSheet.create({
     mainBtn: { backgroundColor: '#7B3F9E', padding: 18, borderRadius: 10, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
     mainBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
     clearBtn: { padding: 15, alignItems: 'center', marginTop: 10 },
-    clearBtnText: { color: '#999', fontWeight: 'bold', fontSize: 14 }
+    clearBtnText: { color: '#999', fontWeight: 'bold', fontSize: 14 },
+    // Modal Styles
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    modalContent: { backgroundColor: 'white', width: '85%', borderRadius: 10, paddingVertical: 10, elevation: 5 },
+    modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#5D2E7A', textAlign: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', marginBottom: 5 },
+    modalItem: { paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+    modalItemTitle: { fontSize: 16, color: '#333', fontWeight: 'bold' },
+    modalItemDesc: { fontSize: 13, color: '#888', marginTop: 2 }
 });
