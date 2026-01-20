@@ -1,0 +1,12 @@
+[33m0586e15[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: adiciona detector de padrões geométricos na criação de jogos
+[33m253f32b[m Feat: Evolui Guardião para detectar jogos com 14 pontos + Sistema de cores (Vermelho/Laranja/Verde/Azul)
+[33m49986c5[m Feat: Implementa Guardião de Jogos Repetidos e corrige estatísticas de ciclos
+[33m82dcc69[m Fix: Remove duplicidade visual do card financeiro e adiciona termometro de qualidade
+[33m0af1b5c[m Feat: Adiciona placar financeiro com resumo de lucro/prejuízo
+[33m497b575[m Feat: Destaque visual de acertos na conferencia de jogos
+[33m1057d5d[m Style: Melhoria visual no input de concurso em Meus Jogos
+[33m10c3cab[m Feat: Sync Historico, Gerador IA e Conferencia Automatica
+[33me25c3c8[m fix: remove duplicata de consulta.tsx e implementa UI de filtro premium
+[33m680ce37[m feat: implementada tela de consulta profissional, sistema de selecao de jogos e design premium
+[33m4baf570[m Implementacao completa do design Premium em todas as abas conforme referencia
+[33m37e571b[m Initial commit: Lotofacil App with Backend and Clean Navigation

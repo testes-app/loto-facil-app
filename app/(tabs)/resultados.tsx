@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { salvarJogo, verificarHistoricoPremiacao } from '../../database/operations';
 import { AIStrategy, gerarJogoIA } from '../../services/aiGenerator';
+import { calcularScoreJogo } from '../../utils/scoreCalculator';
 
 // ============================================
 // 📐 DETECTOR DE PADRÕES GEOMÉTRICOS
@@ -18,12 +19,6 @@ function detectarPadrao(numeros: number[]): PadraoDetectado {
         return { severidade: 'baixa', descricao: '' };
     }
 
-    // Converter números para matriz 5x5 (Lotofácil)
-    // 01 02 03 04 05
-    // 06 07 08 09 10
-    // 11 12 13 14 15
-    // 16 17 18 19 20
-    // 21 22 23 24 25
     const matriz = Array(5).fill(0).map(() => Array(5).fill(false));
     numeros.forEach(num => {
         const linha = Math.floor((num - 1) / 5);
@@ -31,57 +26,35 @@ function detectarPadrao(numeros: number[]): PadraoDetectado {
         matriz[linha][coluna] = true;
     });
 
-    // 1. DETECTAR LINHAS HORIZONTAIS COMPLETAS
     const linhasCompletas = matriz.filter(linha => linha.every(v => v)).length;
     if (linhasCompletas >= 3) {
-        return {
-            severidade: 'alta',
-            descricao: `${linhasCompletas} linhas completas - Padrão muito raro!`
-        };
+        return { severidade: 'alta', descricao: `${linhasCompletas} linhas completas - Padrão muito raro!` };
     }
     if (linhasCompletas === 2) {
-        return {
-            severidade: 'media',
-            descricao: `2 linhas horizontais completas`
-        };
+        return { severidade: 'media', descricao: `2 linhas horizontais completas` };
     }
 
-    // 2. DETECTAR COLUNAS VERTICAIS COMPLETAS
     let colunasCompletas = 0;
     for (let c = 0; c < 5; c++) {
         if (matriz.every(linha => linha[c])) colunasCompletas++;
     }
     if (colunasCompletas >= 3) {
-        return {
-            severidade: 'alta',
-            descricao: `${colunasCompletas} colunas completas - Padrão muito raro!`
-        };
+        return { severidade: 'alta', descricao: `${colunasCompletas} colunas completas - Padrão muito raro!` };
     }
     if (colunasCompletas === 2) {
-        return {
-            severidade: 'media',
-            descricao: `2 colunas verticais completas`
-        };
+        return { severidade: 'media', descricao: `2 colunas verticais completas` };
     }
 
-    // 3. DETECTAR DIAGONAIS COMPLETAS
     const diagonalPrincipal = [1, 7, 13, 19, 25].every(n => numeros.includes(n));
     const diagonalSecundaria = [5, 9, 13, 17, 21].every(n => numeros.includes(n));
 
     if (diagonalPrincipal && diagonalSecundaria) {
-        return {
-            severidade: 'alta',
-            descricao: 'X completo (duas diagonais) - Nunca saiu!'
-        };
+        return { severidade: 'alta', descricao: 'X completo (duas diagonais) - Nunca saiu!' };
     }
     if (diagonalPrincipal || diagonalSecundaria) {
-        return {
-            severidade: 'media',
-            descricao: 'Diagonal completa detectada'
-        };
+        return { severidade: 'media', descricao: 'Diagonal completa detectada' };
     }
 
-    // 4. DETECTAR SEQUÊNCIAS LONGAS CONSECUTIVAS
     const numerosOrdenados = [...numeros].sort((a, b) => a - b);
     let maiorSequencia = 1;
     let sequenciaAtual = 1;
@@ -96,32 +69,21 @@ function detectarPadrao(numeros: number[]): PadraoDetectado {
     }
 
     if (maiorSequencia >= 10) {
-        return {
-            severidade: 'alta',
-            descricao: `Sequência de ${maiorSequencia} números seguidos!`
-        };
+        return { severidade: 'alta', descricao: `Sequência de ${maiorSequencia} números seguidos!` };
     }
     if (maiorSequencia >= 7) {
-        return {
-            severidade: 'media',
-            descricao: `Sequência de ${maiorSequencia} números consecutivos`
-        };
+        return { severidade: 'media', descricao: `Sequência de ${maiorSequencia} números consecutivos` };
     }
 
-    // 5. DETECTAR BORDAS COMPLETAS
     const bordaSuperior = [1, 2, 3, 4, 5].filter(n => numeros.includes(n)).length;
     const bordaInferior = [21, 22, 23, 24, 25].filter(n => numeros.includes(n)).length;
     const bordaEsquerda = [1, 6, 11, 16, 21].filter(n => numeros.includes(n)).length;
     const bordaDireita = [5, 10, 15, 20, 25].filter(n => numeros.includes(n)).length;
 
     if (bordaSuperior === 5 || bordaInferior === 5 || bordaEsquerda === 5 || bordaDireita === 5) {
-        return {
-            severidade: 'media',
-            descricao: 'Borda completa detectada'
-        };
+        return { severidade: 'media', descricao: 'Borda completa detectada' };
     }
 
-    // Nenhum padrão significativo detectado
     return { severidade: 'baixa', descricao: '' };
 }
 
@@ -208,6 +170,9 @@ export default function CriarJogoScreen() {
         return { pares: p, impares: numerosSelecionados.length - p, primos, soma };
     })();
 
+    // 🎯 CALCULAR SCORE DE VIABILIDADE
+    const scoreJogo = numerosSelecionados.length >= 15 ? calcularScoreJogo(numerosSelecionados) : null;
+
     const getPreco = () => {
         const precos: any = { 15: 3.50, 16: 56.00, 17: 476.00, 18: 2556.00, 19: 13566.00, 20: 54264.00 };
         return precos[numerosSelecionados.length] || 0;
@@ -218,7 +183,9 @@ export default function CriarJogoScreen() {
             {/* HEADER SUPERIOR (ROXO CLARO) */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <TouchableOpacity onPress={() => router.back()}><Ionicons name="chevron-back" size={28} color="#FFF" /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Ionicons name="chevron-back" size={28} color="#FFF" />
+                    </TouchableOpacity>
                     <View style={styles.selectorContainer}>
                         <View style={styles.selectorTextRow}>
                             <Text style={styles.headerTitle}>LF</Text>
@@ -228,8 +195,12 @@ export default function CriarJogoScreen() {
                     </View>
                 </View>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity onPress={() => setModalVisible(true)}><Ionicons name="bulb-outline" size={26} color="#FFF" /></TouchableOpacity>
-                    <TouchableOpacity><Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} /></TouchableOpacity>
+                    <TouchableOpacity onPress={() => setModalVisible(true)}>
+                        <Ionicons name="bulb-outline" size={26} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity>
+                        <Ionicons name="ellipsis-vertical" size={26} color="#FFF" style={{ marginLeft: 15 }} />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -250,11 +221,51 @@ export default function CriarJogoScreen() {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                style={styles.content}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 20 }}
+            >
                 <View style={styles.infoRow}>
                     <Text style={styles.statusText}>Novo Jogo: <Text style={styles.greenText}>{numerosSelecionados.length} dezenas</Text></Text>
                     <Text style={styles.priceText}>- R$ {getPreco().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
                 </View>
+
+                {/* 🎯 BADGE DE SCORE */}
+                {scoreJogo && (
+                    <View style={[styles.scoreBadge, {
+                        backgroundColor: scoreJogo.status === 'excelente' ? '#E8F5E9' :
+                            scoreJogo.status === 'bom' ? '#E3F2FD' :
+                                scoreJogo.status === 'atencao' ? '#FFF3E0' : '#FFEBEE',
+                        borderColor: scoreJogo.status === 'excelente' ? '#4CAF50' :
+                            scoreJogo.status === 'bom' ? '#2196F3' :
+                                scoreJogo.status === 'atencao' ? '#FF9800' : '#F44336'
+                    }]}>
+                        <View style={styles.scoreBadgeContent}>
+                            <Text style={styles.scoreLabel}>Score de Viabilidade</Text>
+                            <View style={styles.scoreValueRow}>
+                                <Text style={[styles.scoreValue, {
+                                    color: scoreJogo.status === 'excelente' ? '#2E7D32' :
+                                        scoreJogo.status === 'bom' ? '#1565C0' :
+                                            scoreJogo.status === 'atencao' ? '#E65100' : '#C62828'
+                                }]}>
+                                    {scoreJogo.scoreGeral.toFixed(1)}
+                                </Text>
+                                <Text style={styles.scoreMax}>/10</Text>
+                                <Ionicons
+                                    name={scoreJogo.status === 'excelente' ? 'star' :
+                                        scoreJogo.status === 'bom' ? 'thumbs-up' :
+                                            scoreJogo.status === 'atencao' ? 'alert-circle' : 'warning'}
+                                    size={20}
+                                    color={scoreJogo.status === 'excelente' ? '#2E7D32' :
+                                        scoreJogo.status === 'bom' ? '#1565C0' :
+                                            scoreJogo.status === 'atencao' ? '#E65100' : '#C62828'}
+                                    style={{ marginLeft: 8 }}
+                                />
+                            </View>
+                        </View>
+                    </View>
+                )}
 
                 <TextInput
                     style={styles.input}
@@ -389,10 +400,16 @@ export default function CriarJogoScreen() {
                     <Text style={styles.mainBtnText}>SALVAR JOGO</Text>
                 </TouchableOpacity>
 
+                {/* Espaço para o rodapé fixo não sobrepor */}
+                <View style={{ height: 80 }} />
+            </ScrollView>
+
+            {/* Botão LIMPAR fixo no rodapé */}
+            <View style={styles.footerContainer}>
                 <TouchableOpacity style={styles.clearBtn} onPress={() => setNumerosSelecionados([])}>
                     <Text style={styles.clearBtnText}>LIMPAR SELEÇÃO</Text>
                 </TouchableOpacity>
-            </ScrollView>
+            </View>
 
             <Modal
                 animationType="fade"
@@ -495,57 +512,187 @@ const styles = StyleSheet.create({
         backgroundColor: '#A556BE'
     },
     content: { flex: 1, padding: 16 },
-    infoRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 15 },
-    statusText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+    infoRow: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 8 },
+    statusText: { fontSize: 16, fontWeight: 'bold', color: '#333' },
     greenText: { color: '#2ECC71' },
-    priceText: { fontSize: 18, color: '#333', marginLeft: 8 },
-    input: { backgroundColor: '#F8F8F8', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#EEE', fontSize: 16, marginBottom: 15, color: '#333' },
-    statsBar: { backgroundColor: '#5D2E7A', flexDirection: 'row', justifyContent: 'space-around', padding: 12, borderRadius: 10, marginBottom: 20 },
-    statLabel: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, marginBottom: 30 },
-    ball: { width: '17%', aspectRatio: 1, backgroundColor: '#FFF', borderWidth: 2, borderColor: '#DDD', borderRadius: 25, justifyContent: 'center', alignItems: 'center' },
+    priceText: { fontSize: 16, color: '#333', marginLeft: 8 },
+
+    // 🎯 ESTILOS DO SCORE BADGE (ULTRA COMPACTO)
+    scoreBadge: {
+        marginBottom: 6,
+        padding: 6,
+        borderRadius: 6,
+        borderWidth: 2,
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 1
+    },
+    scoreBadgeContent: {
+        alignItems: 'center'
+    },
+    scoreLabel: {
+        fontSize: 10,
+        fontWeight: '600',
+        color: '#666',
+        marginBottom: 2,
+        textTransform: 'uppercase',
+        letterSpacing: 0.3
+    },
+    scoreValueRow: {
+        flexDirection: 'row',
+        alignItems: 'baseline'
+    },
+    scoreValue: {
+        fontSize: 22,
+        fontWeight: 'bold'
+    },
+    scoreMax: {
+        fontSize: 12,
+        color: '#999',
+        marginLeft: 2
+    },
+
+    input: {
+        backgroundColor: '#F8F8F8',
+        padding: 6,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#EEE',
+        fontSize: 14,
+        marginBottom: 6,
+        color: '#333'
+    },
+    statsBar: {
+        backgroundColor: '#5D2E7A',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        padding: 8,
+        borderRadius: 6,
+        marginBottom: 6
+    },
+    statLabel: { color: 'white', fontWeight: 'bold', fontSize: 12 },
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 8,
+        marginBottom: 15
+    },
+    ball: {
+        width: '17%',
+        aspectRatio: 1,
+        backgroundColor: '#FFF',
+        borderWidth: 2,
+        borderColor: '#DDD',
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     ballSelected: { backgroundColor: '#7B3F9E', borderColor: '#7B3F9E' },
     ballText: { fontSize: 18, fontWeight: 'bold', color: '#333' },
     ballTextSelected: { color: '#FFF' },
-    mainBtn: { backgroundColor: '#7B3F9E', padding: 18, borderRadius: 10, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+    mainBtn: {
+        backgroundColor: '#7B3F9E',
+        padding: 18,
+        borderRadius: 10,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3
+    },
     mainBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-    clearBtn: { padding: 15, alignItems: 'center', marginTop: 10 },
-    clearBtnText: { color: '#999', fontWeight: 'bold', fontSize: 14 },
-    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-    modalContent: { backgroundColor: 'white', width: '85%', borderRadius: 10, paddingVertical: 10, elevation: 5 },
-    modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#5D2E7A', textAlign: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', marginBottom: 5 },
-    modalItem: { paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+
+    footerContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFF',
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: Platform.OS === 'ios' ? 35 : 25,
+        borderTopWidth: 1,
+        borderTopColor: '#EEE',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4
+    },
+
+    clearBtn: {
+        padding: 12,
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+        borderRadius: 8
+    },
+    clearBtnText: { color: '#7B3F9E', fontWeight: 'bold', fontSize: 14 },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        width: '85%',
+        borderRadius: 10,
+        paddingVertical: 10,
+        elevation: 5
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#5D2E7A',
+        textAlign: 'center',
+        paddingVertical: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+        marginBottom: 5
+    },
+    modalItem: {
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F5F5F5'
+    },
     modalItemTitle: { fontSize: 16, color: '#333', fontWeight: 'bold' },
     modalItemDesc: { fontSize: 13, color: '#888', marginTop: 2 },
     termometroContainer: {
-        marginBottom: 20,
-        marginTop: -10,
-        padding: 8,
+        marginBottom: 6,
+        marginTop: -3,
+        padding: 5,
         borderWidth: 1,
         borderTopWidth: 0,
-        borderBottomLeftRadius: 10,
-        borderBottomRightRadius: 10,
+        borderBottomLeftRadius: 6,
+        borderBottomRightRadius: 6,
         backgroundColor: '#FFF',
         alignItems: 'center',
         elevation: 1
     },
     termometroText: {
-        fontSize: 14,
+        fontSize: 11,
         fontWeight: 'bold',
         textTransform: 'uppercase'
     },
     padraoAlert: {
-        marginTop: 10,
-        marginBottom: 10,
-        padding: 10,
-        borderRadius: 8,
+        marginTop: 4,
+        marginBottom: 6,
+        padding: 6,
+        borderRadius: 6,
         borderWidth: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center'
     },
     padraoText: {
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: '600'
     }
 });

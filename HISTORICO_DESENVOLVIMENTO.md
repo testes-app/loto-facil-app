@@ -1,4 +1,3 @@
-
 # 🎰 Log de Desenvolvimento - Lotofácil Premium
 
 ### 📅 Data: 20/01/2026
@@ -20,7 +19,7 @@
 
 4.  **Resumo Financeiro e Visual**:
     - **Destaque Visual**: Bolinhas acertadas brilham em verde nos cartões.
-    - **Placar Automático**:Calcula Lucro/Prejuízo total do concurso (Investido vs Prêmios).
+    - **Placar Automático**: Calcula Lucro/Prejuízo total do concurso (Investido vs Prêmios).
 
 5.  **Limpeza de Código**:
     - Padronização de nomes e imports.
@@ -35,10 +34,21 @@
     - **Performance**: Varredura otimizada em memória (~3000 registros em <500ms).
     - **Correções**: Ajuste na lógica de estatísticas de Ciclos para evitar quebras.
 
+7.  **Detector de Padrões Geométricos** 📐:
+    - Criado módulo `utils/padraoGeometrico.ts`.
+    - **Análise em Tempo Real**: Detecta padrões visuais raros durante a seleção de números.
+    - **Padrões Detectados**:
+        - 🔴 **Alta Severidade**: 3+ linhas/colunas completas, X diagonal completo, sequências 10+ números.
+        - 🟠 **Média Severidade**: 2 linhas/colunas, 1 diagonal, bordas completas, sequências 7-9 números.
+    - **Interface Integrada**: Alertas visuais coloridos abaixo do termômetro de qualidade.
+    - **Educativo**: Ajuda usuários a evitar padrões que historicamente nunca saem.
+    - **Performance**: Análise instantânea usando matriz 5x5 otimizada.
+
 ### 🔍 Onde Paramos (Próximos Passos)
 1.  **Refinamento de UX**: Melhorar animações ao conferir jogos.
 2.  **Dashboard**: Adicionar mais insights na tela inicial.
 3.  **Testes**: Validar performance com banco cheio (3000 registros).
+4.  **Exportar/Importar**: Sistema de backup e compartilhamento de jogos.
 
 ---
 *Para retomar esta conversa no futuro, peça ao agente para ler o arquivo `HISTORICO_DESENVOLVIMENTO.md`.*
