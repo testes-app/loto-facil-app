@@ -1,3 +1,4 @@
+
 # 🎰 Log de Desenvolvimento - Lotofácil Premium
 
 ### 📅 Data: 20/01/2026
@@ -17,7 +18,11 @@
     - Tela "Meus Jogos" agora confere automaticamente todos os jogos salvos contra o concurso selecionado.
     - Badges coloridas indicam a pontuação (Verde para 14, Ouro para 15, Azul para 11-13).
 
-4.  **Limpeza de Código**:
+4.  **Resumo Financeiro e Visual**:
+    - **Destaque Visual**: Bolinhas acertadas brilham em verde nos cartões.
+    - **Placar Automático**:Calcula Lucro/Prejuízo total do concurso (Investido vs Prêmios).
+
+5.  **Limpeza de Código**:
     - Padronização de nomes e imports.
 
 ### 🔍 Onde Paramos (Próximos Passos)

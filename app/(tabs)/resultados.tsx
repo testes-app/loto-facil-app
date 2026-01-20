@@ -127,12 +127,66 @@ export default function CriarJogoScreen() {
                     placeholderTextColor="#999"
                 />
 
-                <View style={styles.statsBar}>
-                    <Text style={styles.statLabel}>Par: {stats.pares}</Text>
-                    <Text style={styles.statLabel}>Ímpar: {stats.impares}</Text>
-                    <Text style={styles.statLabel}>Primo: {stats.primos}</Text>
-                    <Text style={styles.statLabel}>Soma: {stats.soma}</Text>
-                </View>
+                {/* Lógica do Termômetro */}
+                {(() => {
+                    const { pares, soma } = stats;
+                    const qtd = numerosSelecionados.length;
+
+                    let qualidade = 'neutro'; // neutro, ruim, bom, excelente
+                    let msg = '';
+
+                    if (qtd >= 15) {
+                        // Regra simplificada de ouro da Lotofácil
+                        const paresAceitaveis = [7, 8, 9];
+                        const somaAceitavel = soma >= 180 && soma <= 230;
+
+                        if (paresAceitaveis.includes(pares) && somaAceitavel) {
+                            qualidade = 'excelente';
+                            msg = '🌟 Jogo Profissional!';
+                        } else if (Math.abs(pares - 7.5) > 3 || soma < 160 || soma > 250) {
+                            qualidade = 'ruim';
+                            msg = '⚠️ Muito Desequilibrado';
+                        } else {
+                            qualidade = 'bom';
+                            msg = '⚖️ Jogo Equilibrado';
+                        }
+                    }
+
+                    const bgColors = {
+                        neutro: '#5D2E7A',
+                        ruim: '#C0392B', // Vermelho
+                        bom: '#2980B9', // Azul
+                        excelente: '#27AE60' // Verde
+                    };
+
+                    const corFundo = bgColors[qualidade as keyof typeof bgColors];
+
+                    return (
+                        <>
+                            <View style={[styles.statsBar, { backgroundColor: corFundo }]}>
+                                <Text style={styles.statLabel}>Par: {stats.pares}</Text>
+                                <Text style={styles.statLabel}>Ímpar: {stats.impares}</Text>
+                                <Text style={styles.statLabel}>Primo: {stats.primos}</Text>
+                                <Text style={styles.statLabel}>Soma: {stats.soma}</Text>
+                            </View>
+
+                            {/* Termômetro Visual */}
+                            {qtd >= 15 && (
+                                <View style={[styles.termometroContainer, { borderColor: corFundo }]}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons
+                                            name={qualidade === 'excelente' ? 'ribbon' : qualidade === 'ruim' ? 'warning' : 'checkmark-circle'}
+                                            size={20}
+                                            color={corFundo}
+                                            style={{ marginRight: 8 }}
+                                        />
+                                        <Text style={[styles.termometroText, { color: corFundo }]}>{msg}</Text>
+                                    </View>
+                                </View>
+                            )}
+                        </>
+                    );
+                })()}
 
                 <View style={styles.grid}>
                     {todosNumeros.map((num) => {
@@ -283,5 +337,24 @@ const styles = StyleSheet.create({
     modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#5D2E7A', textAlign: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', marginBottom: 5 },
     modalItem: { paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
     modalItemTitle: { fontSize: 16, color: '#333', fontWeight: 'bold' },
-    modalItemDesc: { fontSize: 13, color: '#888', marginTop: 2 }
+    modalItemDesc: { fontSize: 13, color: '#888', marginTop: 2 },
+
+    // Termometro
+    termometroContainer: {
+        marginBottom: 20,
+        marginTop: -10, // Aproxima da barra de stats
+        padding: 8,
+        borderWidth: 1,
+        borderTopWidth: 0,
+        borderBottomLeftRadius: 10,
+        borderBottomRightRadius: 10,
+        backgroundColor: '#FFF',
+        alignItems: 'center',
+        elevation: 1
+    },
+    termometroText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        textTransform: 'uppercase'
+    }
 });

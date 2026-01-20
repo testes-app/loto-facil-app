@@ -133,28 +133,7 @@ export default function MeusJogosScreen() {
       {/* ... SUBHEADER ... */}
       {/* ... SELETOR ... */}
 
-      {/* CARD DE RESUMO FINANCEIRO */}
-      {jogos.length > 0 && (
-        <View style={[styles.resumoCard, (resumoFinanceiro?.saldo || 0) >= 0 ? styles.resumoLucro : styles.resumoPrejuizo]}>
-          <View style={styles.resumoItem}>
-            <Text style={styles.resumoLabel}>Investido</Text>
-            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.custoTotal.toFixed(2) : '0.00'}</Text>
-          </View>
-          <View style={styles.resumoDivider} />
-          <View style={styles.resumoItem}>
-            <Text style={styles.resumoLabel}>Prêmios</Text>
-            <Text style={styles.resumoValue}>R$ {resumoFinanceiro ? resumoFinanceiro.premioTotal.toFixed(2) : '0.00'}</Text>
-          </View>
-          <View style={styles.resumoDivider} />
-          <View style={styles.resumoItem}>
-            <Text style={styles.resumoLabel}>Saldo</Text>
-            <Text style={[styles.resumoValue, { fontWeight: 'bold' }]}>
-              {resumoFinanceiro && resumoFinanceiro.saldo >= 0 ? '+' : ''}
-              R$ {resumoFinanceiro ? resumoFinanceiro.saldo.toFixed(2) : '0.00'}
-            </Text>
-          </View>
-        </View>
-      )}      <View style={styles.header}>
+      <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}><Ionicons name="chevron-back" size={28} color="#FFF" /></TouchableOpacity>
           <View style={styles.selectorContainer}>
