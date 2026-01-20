@@ -5,6 +5,129 @@ import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity
 import { salvarJogo, verificarHistoricoPremiacao } from '../../database/operations';
 import { AIStrategy, gerarJogoIA } from '../../services/aiGenerator';
 
+// ============================================
+// 📐 DETECTOR DE PADRÕES GEOMÉTRICOS
+// ============================================
+interface PadraoDetectado {
+    severidade: 'baixa' | 'media' | 'alta';
+    descricao: string;
+}
+
+function detectarPadrao(numeros: number[]): PadraoDetectado {
+    if (numeros.length < 15) {
+        return { severidade: 'baixa', descricao: '' };
+    }
+
+    // Converter números para matriz 5x5 (Lotofácil)
+    // 01 02 03 04 05
+    // 06 07 08 09 10
+    // 11 12 13 14 15
+    // 16 17 18 19 20
+    // 21 22 23 24 25
+    const matriz = Array(5).fill(0).map(() => Array(5).fill(false));
+    numeros.forEach(num => {
+        const linha = Math.floor((num - 1) / 5);
+        const coluna = (num - 1) % 5;
+        matriz[linha][coluna] = true;
+    });
+
+    // 1. DETECTAR LINHAS HORIZONTAIS COMPLETAS
+    const linhasCompletas = matriz.filter(linha => linha.every(v => v)).length;
+    if (linhasCompletas >= 3) {
+        return {
+            severidade: 'alta',
+            descricao: `${linhasCompletas} linhas completas - Padrão muito raro!`
+        };
+    }
+    if (linhasCompletas === 2) {
+        return {
+            severidade: 'media',
+            descricao: `2 linhas horizontais completas`
+        };
+    }
+
+    // 2. DETECTAR COLUNAS VERTICAIS COMPLETAS
+    let colunasCompletas = 0;
+    for (let c = 0; c < 5; c++) {
+        if (matriz.every(linha => linha[c])) colunasCompletas++;
+    }
+    if (colunasCompletas >= 3) {
+        return {
+            severidade: 'alta',
+            descricao: `${colunasCompletas} colunas completas - Padrão muito raro!`
+        };
+    }
+    if (colunasCompletas === 2) {
+        return {
+            severidade: 'media',
+            descricao: `2 colunas verticais completas`
+        };
+    }
+
+    // 3. DETECTAR DIAGONAIS COMPLETAS
+    const diagonalPrincipal = [1, 7, 13, 19, 25].every(n => numeros.includes(n));
+    const diagonalSecundaria = [5, 9, 13, 17, 21].every(n => numeros.includes(n));
+
+    if (diagonalPrincipal && diagonalSecundaria) {
+        return {
+            severidade: 'alta',
+            descricao: 'X completo (duas diagonais) - Nunca saiu!'
+        };
+    }
+    if (diagonalPrincipal || diagonalSecundaria) {
+        return {
+            severidade: 'media',
+            descricao: 'Diagonal completa detectada'
+        };
+    }
+
+    // 4. DETECTAR SEQUÊNCIAS LONGAS CONSECUTIVAS
+    const numerosOrdenados = [...numeros].sort((a, b) => a - b);
+    let maiorSequencia = 1;
+    let sequenciaAtual = 1;
+
+    for (let i = 1; i < numerosOrdenados.length; i++) {
+        if (numerosOrdenados[i] === numerosOrdenados[i - 1] + 1) {
+            sequenciaAtual++;
+            maiorSequencia = Math.max(maiorSequencia, sequenciaAtual);
+        } else {
+            sequenciaAtual = 1;
+        }
+    }
+
+    if (maiorSequencia >= 10) {
+        return {
+            severidade: 'alta',
+            descricao: `Sequência de ${maiorSequencia} números seguidos!`
+        };
+    }
+    if (maiorSequencia >= 7) {
+        return {
+            severidade: 'media',
+            descricao: `Sequência de ${maiorSequencia} números consecutivos`
+        };
+    }
+
+    // 5. DETECTAR BORDAS COMPLETAS
+    const bordaSuperior = [1, 2, 3, 4, 5].filter(n => numeros.includes(n)).length;
+    const bordaInferior = [21, 22, 23, 24, 25].filter(n => numeros.includes(n)).length;
+    const bordaEsquerda = [1, 6, 11, 16, 21].filter(n => numeros.includes(n)).length;
+    const bordaDireita = [5, 10, 15, 20, 25].filter(n => numeros.includes(n)).length;
+
+    if (bordaSuperior === 5 || bordaInferior === 5 || bordaEsquerda === 5 || bordaDireita === 5) {
+        return {
+            severidade: 'media',
+            descricao: 'Borda completa detectada'
+        };
+    }
+
+    // Nenhum padrão significativo detectado
+    return { severidade: 'baixa', descricao: '' };
+}
+
+// ============================================
+// 🎰 COMPONENTE PRINCIPAL
+// ============================================
 export default function CriarJogoScreen() {
     const router = useRouter();
     const [nome, setNome] = useState('');
@@ -46,7 +169,6 @@ export default function CriarJogoScreen() {
         setLoadingAI(true);
         setModalVisible(false);
         try {
-            // Se o usuário selecionou mais números manualmente, respeitar, senão usar 15
             const qtd = numerosSelecionados.length >= 15 ? numerosSelecionados.length : 15;
             const novosNumeros = await gerarJogoIA(strategy, qtd);
             setNumerosSelecionados(novosNumeros);
@@ -147,7 +269,6 @@ export default function CriarJogoScreen() {
                     const { pares, soma } = stats;
                     const qtd = numerosSelecionados.length;
 
-                    // Ajuste de tipagem para incluir 'atencao' (Laranja)
                     let qualidade: 'neutro' | 'ruim' | 'bom' | 'excelente' | 'atencao' = 'neutro';
                     let msg = '';
 
@@ -165,7 +286,6 @@ export default function CriarJogoScreen() {
                             const ultimo14 = historicoPremiacao?.acertos14[0];
                             msg = `😯 Já fez 14pts ${qtd14}x (Últ: ${ultimo14})`;
                         } else {
-                            // Regra simplificada de ouro da Lotofácil
                             const paresAceitaveis = [7, 8, 9];
                             const somaAceitavel = soma >= 180 && soma <= 230;
 
@@ -184,10 +304,10 @@ export default function CriarJogoScreen() {
 
                     const bgColors: Record<string, string> = {
                         neutro: '#5D2E7A',
-                        ruim: '#C0392B',      // Vermelho
-                        atencao: '#F39C12',   // Laranja (Novo)
-                        bom: '#2980B9',       // Azul
-                        excelente: '#27AE60'  // Verde
+                        ruim: '#C0392B',
+                        atencao: '#F39C12',
+                        bom: '#2980B9',
+                        excelente: '#27AE60'
                     };
 
                     const corFundo = bgColors[qualidade] || bgColors.neutro;
@@ -203,17 +323,46 @@ export default function CriarJogoScreen() {
 
                             {/* Termômetro Visual */}
                             {qtd >= 15 && (
-                                <View style={[styles.termometroContainer, { borderColor: corFundo }]}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Ionicons
-                                            name={fez15Pontos ? 'alert-circle' : fez14Pontos ? 'alert-outline' : (qualidade === 'excelente' ? 'ribbon' : qualidade === 'ruim' ? 'warning' : 'checkmark-circle')}
-                                            size={20}
-                                            color={corFundo}
-                                            style={{ marginRight: 8 }}
-                                        />
-                                        <Text style={[styles.termometroText, { color: corFundo }]}>{msg}</Text>
+                                <>
+                                    <View style={[styles.termometroContainer, { borderColor: corFundo }]}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Ionicons
+                                                name={fez15Pontos ? 'alert-circle' : fez14Pontos ? 'alert-outline' : (qualidade === 'excelente' ? 'ribbon' : qualidade === 'ruim' ? 'warning' : 'checkmark-circle')}
+                                                size={20}
+                                                color={corFundo}
+                                                style={{ marginRight: 8 }}
+                                            />
+                                            <Text style={[styles.termometroText, { color: corFundo }]}>{msg}</Text>
+                                        </View>
                                     </View>
-                                </View>
+
+                                    {/* Detector de Padrão Geométrico */}
+                                    {(() => {
+                                        const padrao = detectarPadrao(numerosSelecionados);
+
+                                        if (padrao.severidade === 'alta' || padrao.severidade === 'media') {
+                                            return (
+                                                <View style={[styles.padraoAlert, {
+                                                    backgroundColor: padrao.severidade === 'alta' ? '#FFF3CD' : '#E8F4F8',
+                                                    borderColor: padrao.severidade === 'alta' ? '#FFC107' : '#17A2B8'
+                                                }]}>
+                                                    <Ionicons
+                                                        name="grid-outline"
+                                                        size={16}
+                                                        color={padrao.severidade === 'alta' ? '#856404' : '#0C5460'}
+                                                        style={{ marginRight: 6 }}
+                                                    />
+                                                    <Text style={[styles.padraoText, {
+                                                        color: padrao.severidade === 'alta' ? '#856404' : '#0C5460'
+                                                    }]}>
+                                                        📐 {padrao.descricao}
+                                                    </Text>
+                                                </View>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+                                </>
                             )}
                         </>
                     );
@@ -362,18 +511,15 @@ const styles = StyleSheet.create({
     mainBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
     clearBtn: { padding: 15, alignItems: 'center', marginTop: 10 },
     clearBtnText: { color: '#999', fontWeight: 'bold', fontSize: 14 },
-    // Modal Styles
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
     modalContent: { backgroundColor: 'white', width: '85%', borderRadius: 10, paddingVertical: 10, elevation: 5 },
     modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#5D2E7A', textAlign: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', marginBottom: 5 },
     modalItem: { paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
     modalItemTitle: { fontSize: 16, color: '#333', fontWeight: 'bold' },
     modalItemDesc: { fontSize: 13, color: '#888', marginTop: 2 },
-
-    // Termometro
     termometroContainer: {
         marginBottom: 20,
-        marginTop: -10, // Aproxima da barra de stats
+        marginTop: -10,
         padding: 8,
         borderWidth: 1,
         borderTopWidth: 0,
@@ -387,5 +533,19 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         textTransform: 'uppercase'
+    },
+    padraoAlert: {
+        marginTop: 10,
+        marginBottom: 10,
+        padding: 10,
+        borderRadius: 8,
+        borderWidth: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    padraoText: {
+        fontSize: 13,
+        fontWeight: '600'
     }
 });
