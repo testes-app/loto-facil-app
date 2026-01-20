@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { JogoCard } from '../../components/JogoCard';
 import { buscarConcurso, buscarUltimoConcurso, ConcursoDb, deletarJogo, listarJogos } from '../../database/operations';
 
@@ -147,14 +147,31 @@ export default function MeusJogosScreen() {
       <View style={styles.concursoSelectorRow}>
         <Text style={styles.concursoLabel}>Concurso:</Text>
         <View style={styles.concursoBox}>
-          <TouchableOpacity onPress={() => setConcursoAlvo(prev => prev - 1)}>
-            <Ionicons name="chevron-down" size={24} color="#333" />
+          <TouchableOpacity style={styles.arrowBtn} onPress={() => setConcursoAlvo(prev => Math.max(1, prev - 1))}>
+            <Ionicons name="chevron-back" size={24} color="#5D2E7A" />
           </TouchableOpacity>
-          <Text style={styles.concursoNumber}>{concursoAlvo}</Text>
-          <TouchableOpacity onPress={() => setConcursoAlvo(prev => prev + 1)}>
-            <Ionicons name="chevron-up" size={24} color="#333" />
+
+          <TextInput
+            style={styles.concursoInput}
+            value={concursoAlvo > 0 ? concursoAlvo.toString() : ''}
+            keyboardType="numeric"
+            onChangeText={(text) => {
+              const num = parseInt(text);
+              if (!isNaN(num)) setConcursoAlvo(num);
+              else if (text === '') setConcursoAlvo(0);
+            }}
+            onBlur={() => {
+              if (concursoAlvo === 0) carregarUltimoConcurso();
+            }}
+          />
+
+          <TouchableOpacity style={styles.arrowBtnRight} onPress={() => setConcursoAlvo(prev => prev + 1)}>
+            <Ionicons name="chevron-forward" size={24} color="#5D2E7A" />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity style={styles.searchBtn} onPress={() => buscarDadosConcurso(concursoAlvo)}>
+          <Ionicons name="search" size={20} color="white" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -270,11 +287,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CCC',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    minWidth: 150,
-    justifyContent: 'space-between'
+    width: 180,
+    justifyContent: 'space-between',
+    height: 44
   },
-  concursoNumber: { fontSize: 18, fontWeight: 'bold', color: '#333', paddingVertical: 5 },
+  arrowBtn: {
+    width: 40,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRightWidth: 1,
+    borderRightColor: '#EEE'
+  },
+  arrowBtnRight: {
+    width: 40,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderLeftWidth: 1,
+    borderLeftColor: '#EEE'
+  },
+  concursoInput: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    height: '100%'
+  },
+  searchBtn: {
+    backgroundColor: '#5D2E7A',
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10
+  },
   content: { flex: 1, padding: 12 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#000', marginBottom: 15 },
   emptyBox: { alignItems: 'center', marginTop: 100 },
