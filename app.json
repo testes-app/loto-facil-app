@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Loto Master - Inteligência em Loteria",
+    "slug": "loto-master-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/icon_master.jpg",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./src/assets/images/splash_master.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#e11d48"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lotomaster.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/icon_master.jpg",
+        "backgroundColor": "#e11d48"
+      },
+      "package": "com.lotomaster.app"
+    },
+    "web": {
+      "favicon": "./src/assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d5bf2457-78b7-4b18-961d-0877a88db156"
+      }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/d5bf2457-78b7-4b18-961d-0877a88db156",
+      "enabled": true,
+      "checkOnLaunch": "ALWAYS",
+      "fallbackToCacheTimeout": 30000
+    }
+  }
+}
