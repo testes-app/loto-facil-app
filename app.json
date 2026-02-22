@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "LotoMatrix",
+    "slug": "lotomatrix",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A0B2E"
+    },
+    "android": {
+      "package": "com.lotomatrix.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c2cc4f12-7b8d-47fd-804e-453ad973b601"
+      }
+    },
+    "owner": "cornellllio"
+  }
+}
