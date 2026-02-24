@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView
+    View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import LotofacilAPI from '../services/LotofacilAPI';
 
-const BUNDLED_DATA = {
-    17: require('../data/resultados/top10_17dezenas_3618concursos.json'),
-    18: require('../data/resultados/top10_18dezenas_3618concursos.json'),
-    19: require('../data/resultados/top10_19dezenas_3618concursos.json'),
-    20: require('../data/resultados/top10_20dezenas_3618concursos.json'),
-};
+const CATEGORIES = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'urgente', label: 'Urgentes' },
+    { id: 'atencao', label: 'Atenção' },
+    { id: 'ok', label: 'Em Dia' },
+    { id: '17', label: '17 Dez' },
+    { id: '18', label: '18 Dez' },
+    { id: '19', label: '19 Dez' },
+    { id: '20', label: '20 Dez' },
+];
 
 export default function PanoramaScreen() {
     const [filtro, setFiltro] = useState('todos');
