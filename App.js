@@ -1,8 +1,9 @@
-import React from 'react';
+import * as Updates from 'expo-updates';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'react-native';
+import { StatusBar, Alert } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -107,6 +108,24 @@ function AppNavigator() {
 }
 
 export default function App() {
+  useEffect(() => {
+    async function onFetchUpdateAsync() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (error) {
+        console.error("Error fetching latest Expo update:", error);
+      }
+    }
+
+    if (!__DEV__) {
+      onFetchUpdateAsync();
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
       <StatusBar
