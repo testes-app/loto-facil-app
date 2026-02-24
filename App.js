@@ -113,8 +113,11 @@ export default function App() {
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
+          Alert.alert("Atualização Encontrada", "Baixando novos dados do concurso 3619...");
           await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
+          Alert.alert("Sucesso", "Atualização aplicada! O app será reiniciado.", [
+            { text: "OK", onPress: () => Updates.reloadAsync() }
+          ]);
         }
       } catch (error) {
         console.error("Error fetching latest Expo update:", error);

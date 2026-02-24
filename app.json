@@ -18,6 +18,15 @@
         "projectId": "c2cc4f12-7b8d-47fd-804e-453ad973b601"
       }
     },
-    "owner": "cornellllio"
+    "owner": "cornellllio",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c2cc4f12-7b8d-47fd-804e-453ad973b601",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 10000
+    },
+    "ios": {}
   }
 }
