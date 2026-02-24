@@ -161,7 +161,7 @@ const LotofacilAPI = {
       }
 
       // 2. Buscar Remoto (GitHub Raw)
-      const url = `https://raw.githubusercontent.com/testes-app/loto-master-app/master/resultados/top10_${dezenas}dezenas_${contest}concursos.json`;
+      const url = `https://raw.githubusercontent.com/testes-app/loto-master-app/master/src/data/resultados/top10_${dezenas}dezenas_${contest}concursos.json`;
       console.log(`Buscando remoto: ${url}`);
 
       const response = await axios.get(url, { timeout: 10000 });
