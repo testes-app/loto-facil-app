@@ -4,25 +4,52 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Data imports
-const dados17 = require('../data/resultados/top10_17dezenas_3618concursos.json');
-const dados18 = require('../data/resultados/top10_18dezenas_3618concursos.json');
-const dados19 = require('../data/resultados/top10_19dezenas_3618concursos.json');
-const dados20 = require('../data/resultados/top10_20dezenas_3618concursos.json');
+import LotofacilAPI from '../services/LotofacilAPI';
 
-const CATEGORIES = [
-    { id: 'todos', label: '🔢 Todos', icon: 'apps' },
-    { id: 'urgente', label: '🔴 Urgentes', status: 'urgente' },
-    { id: 'atencao', label: '🟡 Atenção', status: 'atencao' },
-    { id: 'ok', label: '🟢 Em dia', status: 'ok' },
-    { id: '17', label: '17 Dez' },
-    { id: '18', label: '18 Dez' },
-    { id: '19', label: '19 Dez' },
-    { id: '20', label: '20 Dez' },
-];
+const BUNDLED_DATA = {
+    17: require('../data/resultados/top10_17dezenas_3618concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3618concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3618concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3618concursos.json'),
+};
 
 export default function PanoramaScreen() {
     const [filtro, setFiltro] = useState('todos');
+    const [dadosDinamicos, setDadosDinamicos] = useState(BUNDLED_DATA);
+    const [baseConcursos, setBaseConcursos] = useState(3618);
+    const [carregando, setCarregando] = useState(false);
+
+    useEffect(() => {
+        carregarDadosRemotos();
+    }, []);
+
+    const carregarDadosRemotos = async () => {
+        setCarregando(true);
+        try {
+            const res = await LotofacilAPI.buscarUltimosResultados(1);
+            if (res && res.length > 0) {
+                const concursoAPI = res[0].concurso;
+                const novosDados = { ...BUNDLED_DATA };
+                let maiorBase = 3618;
+
+                for (const d of [17, 18, 19, 20]) {
+                    for (let c = concursoAPI; c > 3618; c--) {
+                        const remoto = await LotofacilAPI.fetchRemoteRankings(c, d);
+                        if (remoto) {
+                            novosDados[d] = remoto;
+                            if (c > maiorBase) maiorBase = c;
+                            break;
+                        }
+                    }
+                }
+                setDadosDinamicos(novosDados);
+                setBaseConcursos(maiorBase);
+            }
+        } catch (error) {
+            console.log('Erro ao carregar panorama remoto:', error);
+        }
+        setCarregando(false);
+    };
 
     const processData = (raw, type, label) => {
         return raw.map((item, index) => {
@@ -43,10 +70,10 @@ export default function PanoramaScreen() {
     };
 
     const allData = [
-        ...processData(dados17, '17', '17 Dezenas'),
-        ...processData(dados18, '18', '18 Dezenas'),
-        ...processData(dados19, '19', '19 Dezenas'),
-        ...processData(dados20, '20', '20 Dezenas'),
+        ...processData(dadosDinamicos[17], '17', '17 Dezenas'),
+        ...processData(dadosDinamicos[18], '18', '18 Dezenas'),
+        ...processData(dadosDinamicos[19], '19', '19 Dezenas'),
+        ...processData(dadosDinamicos[20], '20', '20 Dezenas'),
     ];
 
     const filteredData = allData.filter(item => {
@@ -80,8 +107,17 @@ export default function PanoramaScreen() {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerLogo}>LOTOMATRIX</Text>
-                <Text style={styles.headerTitle}>📊 Painel Geral</Text>
-                <Text style={styles.headerSub}>TOP COMBINAÇÕES · ORDENADO POR ATRASO</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={styles.headerTitle}>📊 Painel Geral</Text>
+                    {carregando ? (
+                        <ActivityIndicator size="small" color="#A78BFA" />
+                    ) : (
+                        <TouchableOpacity onPress={carregarDadosRemotos}>
+                            <Ionicons name="refresh" size={18} color="#A78BFA" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+                <Text style={styles.headerSub}>TOP COMBINAÇÕES · BASE: {baseConcursos} CONCURSOS</Text>
             </View>
 
             <View style={styles.tabsContainer}>

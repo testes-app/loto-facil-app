@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LotofacilAPI = {
   async buscarUltimosResultados(quantidade = 100) {
@@ -147,6 +148,41 @@ const LotofacilAPI = {
     } catch (error) {
       return [];
     }
+  },
+
+  async fetchRemoteRankings(contest, dezenas) {
+    const cacheKey = `ranking_${dezenas}_${contest}`;
+    try {
+      // 1. Tentar Cache
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        console.log(`Usando cache para ${dezenas} dezenas no concurso ${contest}`);
+        return JSON.parse(cached);
+      }
+
+      // 2. Buscar Remoto (GitHub Raw)
+      const url = `https://raw.githubusercontent.com/sinaluz/fechamento-17-dezenas/master/resultados/top10_${dezenas}dezenas_${contest}concursos.json`;
+      console.log(`Buscando remoto: ${url}`);
+
+      const response = await axios.get(url, { timeout: 10000 });
+
+      if (response.data && Array.isArray(response.data)) {
+        // Formatar para o padrão do app (atraso, counts, etc)
+        const formatados = response.data.map(item => ({
+          score: item.score,
+          counts: item.counts,
+          dezenas: item.dezenas,
+          atraso: item.atraso || 0
+        }));
+
+        // Salvar no Cache
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(formatados));
+        return formatados;
+      }
+    } catch (error) {
+      console.log(`Erro ao buscar ${dezenas} remotamente para ${contest}:`, error.message);
+    }
+    return null;
   }
 };
 

@@ -6,23 +6,62 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import LotofacilAPI from '../services/LotofacilAPI';
 
-const dados17 = require('../data/resultados/top10_17dezenas_3618concursos.json');
-const dados18 = require('../data/resultados/top10_18dezenas_3618concursos.json');
-const dados19 = require('../data/resultados/top10_19dezenas_3618concursos.json');
-const dados20 = require('../data/resultados/top10_20dezenas_3618concursos.json');
-
 const DEZENAS = [17, 18, 19, 20];
+
+// Fallback data (bundled)
+const BUNDLED_DATA = {
+    17: require('../data/resultados/top10_17dezenas_3618concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3618concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3618concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3618concursos.json'),
+};
 
 export default function RankingsScreen() {
     const [dezenasSelecionadas, setDezenasSelecionadas] = useState(17);
     const [urgentes, setUrgentes] = useState(false);
     const [ultimoSorteio, setUltimoSorteio] = useState(null);
+    const [dadosDinamicos, setDadosDinamicos] = useState(BUNDLED_DATA);
+    const [baseConcursos, setBaseConcursos] = useState(3618);
+    const [carregando, setCarregando] = useState(false);
 
     useEffect(() => {
-        LotofacilAPI.buscarUltimosResultados(1)
-            .then(res => { if (res && res.length > 0) setUltimoSorteio(res[0]); })
-            .catch(() => { });
+        carregarDadosRemotos();
     }, []);
+
+    const carregarDadosRemotos = async () => {
+        setCarregando(true);
+        try {
+            // 1. Pegar o último concurso oficial
+            const res = await LotofacilAPI.buscarUltimosResultados(1);
+            if (res && res.length > 0) {
+                const ultimo = res[0];
+                setUltimoSorteio(ultimo);
+                const concursoAPI = ultimo.concurso;
+
+                // 2. Tentar buscar rankings para o concurso atual e anteriores (até o bundled 3618)
+                const novosDados = { ...BUNDLED_DATA };
+                let maiorBaseEncontrada = 3618;
+
+                for (const d of DEZENAS) {
+                    // Tentar do mais recente para trás
+                    for (let c = concursoAPI; c > 3618; c--) {
+                        const remoto = await LotofacilAPI.fetchRemoteRankings(c, d);
+                        if (remoto) {
+                            novosDados[d] = remoto;
+                            if (c > maiorBaseEncontrada) maiorBaseEncontrada = c;
+                            break; // Achou o mais recente para essa dezena
+                        }
+                    }
+                }
+
+                setDadosDinamicos(novosDados);
+                setBaseConcursos(maiorBaseEncontrada);
+            }
+        } catch (error) {
+            console.log('Erro ao carregar rankings remotos:', error);
+        }
+        setCarregando(false);
+    };
 
     const calcularAcertos = (dezenas) => {
         if (!ultimoSorteio || !ultimoSorteio.dezenas) return null;
@@ -37,11 +76,7 @@ export default function RankingsScreen() {
     };
 
     const getDados = () => {
-        let dados;
-        if (dezenasSelecionadas === 17) dados = dados17;
-        else if (dezenasSelecionadas === 18) dados = dados18;
-        else if (dezenasSelecionadas === 19) dados = dados19;
-        else dados = dados20;
+        let dados = dadosDinamicos[dezenasSelecionadas];
 
         if (urgentes) {
             return [...dados]
@@ -114,16 +149,27 @@ export default function RankingsScreen() {
 
             <ScrollView style={styles.scrollView}>
                 <View style={styles.content}>
-                    <Text style={styles.titulo}>
-                        🏆 {urgentes ? 'Mais Atrasados' : 'Rankings'} — {dezenasSelecionadas} Dezenas
-                    </Text>
-                    <Text style={styles.subtitulo}>Base: 3618 concursos</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <View>
+                            <Text style={styles.titulo}>
+                                🏆 {urgentes ? 'Mais Atrasados' : 'Rankings'} — {dezenasSelecionadas} Dezenas
+                            </Text>
+                            <Text style={styles.subtitulo}>Base: {baseConcursos} concursos</Text>
+                        </View>
+                        {carregando ? (
+                            <ActivityIndicator size="small" color="#8B5CF6" />
+                        ) : (
+                            <TouchableOpacity onPress={carregarDadosRemotos}>
+                                <Ionicons name="refresh" size={20} color="#8B5CF6" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
 
                     {dados.map((item, index) => {
                         const rank = index + 1;
                         const isPodium = rank <= 3;
                         const atraso = item.atraso ?? 0;
-                        const intervalos = calcularIntervalos(item.counts, 3618);
+                        const intervalos = calcularIntervalos(item.counts, baseConcursos);
 
                         return (
                             <View key={index} style={[styles.rankCard, isPodium && styles.rankCardPodium]}>
@@ -152,7 +198,7 @@ export default function RankingsScreen() {
                                 <View style={[styles.atrasoBadge, { backgroundColor: getAtrasoColor(atraso) }]}>
                                     <Text style={styles.atrasoTexto}>
                                         {(() => {
-                                            const ultimoConcurso = ultimoSorteio?.concurso ?? 3618;
+                                            const ultimoConcurso = ultimoSorteio?.concurso ?? baseConcursos;
                                             const concursoSaiu = ultimoConcurso - atraso;
                                             if (atraso === 0) {
                                                 const acertos = calcularAcertos(item.dezenas);
