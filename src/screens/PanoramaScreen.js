@@ -17,6 +17,13 @@ const CATEGORIES = [
     { id: '20', label: '20 Dez' },
 ];
 
+const BUNDLED_DATA = {
+    17: require('../data/resultados/top10_17dezenas_3618concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3618concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3618concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3618concursos.json'),
+};
+
 export default function PanoramaScreen() {
     const [filtro, setFiltro] = useState('todos');
     const [dadosDinamicos, setDadosDinamicos] = useState(BUNDLED_DATA);
