@@ -75,6 +75,39 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.gridTexto}>Histórico</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Índice de Urgência (cross-category) */}
+            <TouchableOpacity
+                style={[styles.card, { backgroundColor: '#FFF5F5', borderColor: '#FEB2B2', borderWidth: 1 }]}
+                onPress={() => navigation.navigate('Painel')}
+            >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.cardTitulo, { color: '#C53030' }]}>🚨 Índice de Urgência (Destaques)</Text>
+                    <Ionicons name="chevron-forward" size={20} color="#C53030" />
+                </View>
+                <Text style={{ fontSize: 12, color: '#9B2C2C', marginBottom: 12 }}>Os jogos mais atrasados de cada categoria:</Text>
+
+                {[17, 18, 19, 20].map(dz => {
+                    const data = dz === 17 ? require('../data/resultados/top10_17dezenas_3620concursos.json') :
+                        dz === 18 ? require('../data/resultados/top10_18dezenas_3620concursos.json') :
+                            dz === 19 ? require('../data/resultados/top10_19dezenas_3620concursos.json') :
+                                require('../data/resultados/top10_20dezenas_3620concursos.json');
+
+                    // Pegar o mais atrasado (geralmente o que tem o maior 'atraso' ou o primeiro se sorted)
+                    const maisAtrasado = [...data].sort((a, b) => (b.atraso || 0) - (a.atraso || 0))[0];
+
+                    return (
+                        <View key={dz} style={styles.urgenciaItem}>
+                            <View style={styles.urgenciaBadge}>
+                                <Text style={styles.urgenciaBadgeTxt}>{dz} Dez</Text>
+                            </View>
+                            <Text style={styles.urgenciaAtraso}>
+                                <Text style={{ fontWeight: 'bold' }}>{maisAtrasado.atraso || 0}</Text> sorteios sem acertos
+                            </Text>
+                        </View>
+                    );
+                })}
+            </TouchableOpacity>
         </ScrollView>
     );
 }
@@ -124,4 +157,15 @@ const styles = StyleSheet.create({
         width: '47%'
     },
     gridTexto: { marginTop: 8, fontSize: 14, fontWeight: '600', color: '#333' },
+    urgenciaItem: {
+        flexDirection: 'row', alignItems: 'center',
+        marginBottom: 8, backgroundColor: '#fff',
+        padding: 8, borderRadius: 8, elevation: 1
+    },
+    urgenciaBadge: {
+        backgroundColor: '#C53030', paddingHorizontal: 8,
+        paddingVertical: 2, borderRadius: 4, marginRight: 10
+    },
+    urgenciaBadgeTxt: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
+    urgenciaAtraso: { fontSize: 13, color: '#4A5568' },
 });
