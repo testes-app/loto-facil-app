@@ -1,0 +1,40 @@
+
+Builds for @teste_app/lotomatrix:
+
+ID                       830af8b4-e226-4ee8-83fa-7048580916b1
+Platform                 Android
+Status                   finished
+Profile                  preview
+Distribution             internal
+SDK Version              54.0.0
+Runtime Version          1.0.0
+Version                  1.0.0
+Version code             3
+Commit                   44cedae229c2df5cf74d248cfcd21aa92e25d401
+Logs                     https://expo.dev/accounts/teste_app/projects/lotomatrix/builds/830af8b4-e226-4ee8-83fa-7048580916b1
+Application Archive URL  https://expo.dev/artifacts/eas/hbxkQNbi41bUuErucUXBgF.apk
+Build Artifacts URL      null
+Fingerprint              b016fe640238e5165532782b0783f9dc9848a37d
+Started at               24/02/2026, 00:16:42
+Finished at              24/02/2026, 00:24:36
+Started by               teste_app
+
+ÔÇöÔÇöÔÇö
+
+ID                       a7600546-4f8a-437a-9239-8b6f3bd17b91
+Platform                 Android
+Status                   finished
+Profile                  production
+Distribution             store
+SDK Version              54.0.0
+Runtime Version          1.0.0
+Version                  1.0.0
+Version code             3
+Commit                   44cedae229c2df5cf74d248cfcd21aa92e25d401
+Logs                     https://expo.dev/accounts/teste_app/projects/lotomatrix/builds/a7600546-4f8a-437a-9239-8b6f3bd17b91
+Application Archive URL  https://expo.dev/artifacts/eas/mEKMArZWqap3WmEfTSBTyM.aab
+Build Artifacts URL      null
+Fingerprint              43880b416320ea3f353dd8adece6e0b3cf59da87
+Started at               24/02/2026, 00:08:34
+Finished at              24/02/2026, 00:15:43
+Started by               teste_app

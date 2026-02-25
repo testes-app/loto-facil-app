@@ -1,0 +1,53 @@
+[
+  {
+    "id": "5200831f-9a63-4ecb-a08b-1c2b2f42f33e",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "artifacts": {
+      "buildUrl": "https://expo.dev/artifacts/eas/b8iHDVRCdXFxk1uJxCwtXL.apk",
+      "applicationArchiveUrl": "https://expo.dev/artifacts/eas/b8iHDVRCdXFxk1uJxCwtXL.apk"
+    },
+    "fingerprint": {
+      "id": "019c9586-557e-737d-8bae-81cd92c2b140",
+      "hash": "abb5f1ad525d029d0f94c54223bb1031bc12b139"
+    },
+    "initiatingActor": {
+      "id": "acb64a69-5937-4dcd-a9cc-260e91a364c1",
+      "displayName": "teste_app"
+    },
+    "logFiles": [
+      "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035135120-b98585cd-24e0-4f7c-84c0-7ad13a0a99e4.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160438Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=58dd5a2942df9c97bb774bd672b83b2538fae62bf213eb2f43bcd6ea27906ff1d5510a6808376eb2f0429a5e477a52d7c2bc7dc55b820d56bf708af54682b76226e3753bc95741247fb341569988498f607b1e81b3ac8fa1ed9fbad3ade267332d6020f03155aca9ea3867b415fdb95ce77af07857e5b7a0b53b0bb6e2d2ee67e3e763ef1dad99ac5ef374ed7334192a99ab6126149081c6dcd975c51822fde52ad87d26f1cc0ce07826af6eff7fed217998ba0188f774feef76baa4504f207be696f77b29c5aaae6f0825edaf951b045ffa29e560bb750fd6be845746ea2c4b7c4bcf1de1b1725c1a99d6eb5a8924bfa212bb36f634d41045a30eacd4b93d9c",
+      "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140473-54d52531-3c49-4045-bf65-23c86abf41a8.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160438Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=a21ab2e8e043d36e228269bd8945f25a2dae8e626bb9b00a7000b6961a7f472179c0f38b77f626a998c650ad4ca198d59a04dcf6864e2f955a718a1d3fe7eed365fb2f8a5002ac2ed4ea61da491785f8dd34ad705a6d963c157e5e53d00905762dc173e1d4de67e502675b059bd6a68d8274ad16ddeb9e269bc88a3dfe435d88945f3930e978b1939a4471ca469ee46bd30041d0355de08ef6b3828e59234d1792e1e056dde794eb407d8cb4dd4557f2b49ea6fe302e61bd79c6ee7a9246d407281b2b63f687f17af52f4a7776549f6b16cd5a6571deccd7cea90594396684c1c6087d1384975be5acecf6ae2d3405f761a3ae1aaf4e55ecfa1b3367b61a065c",
+      "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140678-f35cbe12-a512-44db-a990-23d3f07d73da.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160438Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=19506b694ea51a27cb7b9201aee7483ade91e140516f8a4bb271975ffbc825d0df1aa13a4d5be232497e00571643da9cbbd2b259c2ec649cf1544a78c353862d0df22241f27039a6a7f5027aa00dfcd282df9778de1de8135f4e4e9492fee6718123deb68e2bd7e2c5f7b899fd284d90f64e4318ba26f0399e5ed82d8e4c19bcacee2845091b06fe08b0bdcb03cb13043f9f3945f60a8e31f3ceaf74aba0b9ef7cb7245820f0e52901953a5ed3b6e253b70f30ff4f2e574a89fee106f5a766801f11054d2ea1acb8c6b90703fe3ec0970c12ba60878b3a1f56209d11e644f3162f7cdba934b3d5357c54dd801c731aeca94386e7ee59fa2c9a957c6951e5e545",
+      "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140883-b352d618-2c1f-465c-8fea-9fc176c6d7ff.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160438Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=3b2cdf80af267e298ca86805d1b902a0ed6e3d5033f7d53fcfcb5835067a284165d00c5fbb00d008024ada74a60b5fd95d2e1c044f9e1f8d8eaf8aa53b0d034641ebbf070d079a9c95eebe608707958c2c230d7315eb76bf772f9402345647cd66a5411182184dc40820c99406d8a121dfd2fc9d9f65910ae7bc63183431877aa906e67749733e5639d2820a3f5f06b27c9297acf23ad2f7e1bc387c2185d81997127f876ee0b4f9f9f1b0f66a60a74c2537322c9035800ebcc7f2d5feb0edebd8e86f2766005fba7f77df49d9d7093f23ec28bc3c28d30761d112ea09d70134c039fa21710d0d20826348a3eba7adc995eeb2155bcecd031a6dcdbdaefdbc45"
+    ],
+    "project": {
+      "id": "a235c461-49c0-43e4-8a90-ef13aabaa9d2",
+      "name": "lotomatrix",
+      "slug": "lotomatrix",
+      "ownerAccount": {
+        "id": "2fa5d69e-1376-49b9-85ec-fc3e0a4dca65",
+        "name": "teste_app"
+      }
+    },
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "sdkVersion": "54.0.0",
+    "appVersion": "1.5.0",
+    "appBuildVersion": "3",
+    "runtimeVersion": "exposdk:54.0.0",
+    "gitCommitHash": "ce7acafa4a0c8fdf3e85f3e9627c847672eb5961",
+    "gitCommitMessage": "update: rankings automatizados ate o concurso 3620",
+    "priority": "NORMAL_PLUS",
+    "createdAt": "2026-02-25T15:58:54.777Z",
+    "updatedAt": "2026-02-25T16:04:14.882Z",
+    "completedAt": "2026-02-25T16:04:07.760Z",
+    "expirationDate": "2026-03-11T15:58:54.833Z",
+    "isForIosSimulator": false,
+    "metrics": {
+      "buildWaitTime": 231,
+      "buildQueueTime": 43541,
+      "buildDuration": 268879
+    }
+  }
+]

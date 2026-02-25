@@ -1,0 +1,42 @@
+{
+  "id": "5200831f-9a63-4ecb-a08b-1c2b2f42f33e",
+  "status": "IN_PROGRESS",
+  "platform": "ANDROID",
+  "artifacts": {},
+  "fingerprint": {
+    "id": "019c9586-557e-737d-8bae-81cd92c2b140",
+    "hash": "abb5f1ad525d029d0f94c54223bb1031bc12b139"
+  },
+  "initiatingActor": {
+    "id": "acb64a69-5937-4dcd-a9cc-260e91a364c1",
+    "displayName": "teste_app"
+  },
+  "logFiles": [
+    "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035135120-b98585cd-24e0-4f7c-84c0-7ad13a0a99e4.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160402Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=5c70915eb0b3e1d6d8159c05718c75d1a232ca99663eccad5a7b608c6dc45878fd12143b0f82e43d5911dd1721f57164c3b3c23fc83c755df9293e7961116a9a5f86453c10a65eadf27915216019b6635c3f9bfb63b2c7a7299dc40d6b67b6454892fd2a1157a8bea9237e1066483c388f8374e1863aee2aebe350d1231bc5af0778e5bfe54a5f9b932266f5b1d763220bff14d872c40ba41f7990abbc2bf1cdb8c693954460e4d4698594398ad24c08f6860846a6d8e942cbadac2f5a710ab369a83bc74fba795d0470bc41767547cb1fb2ac7f3677bc69b2cb71894778f58a8a8231aa15bb5720397a2f338e91b3876511ee129ba54188ec4a8e1041867311",
+    "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140473-54d52531-3c49-4045-bf65-23c86abf41a8.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160402Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=35578eb62786277deb05e8c2bdd9c31d20fb58bbf7a625533aa4f4f1ad6717a70c43acc8c395bb97488a8eb5bc2cf97e93e18450d96942b0159748add873da560b8d930a17de34a9ab84c78ff13bcfad43063156819815b822452e2bb82383dfd5a809778212b5e2649cf90882fe434ad67b6412c99f9e963083621378da571d2b21359723aa25ed222f4fe1913d24409a407d31e50744ac0235b1c62f2522447afa3c781c9776a94f11d381e1c85b0709df3574d1b3b68473c602d5c05c70b859398b26395f6a392322972eff14f5eaa4d4b898286302e4dc02cc85ab9bd59180a7320f52adddfff404346052e7e2da01198d47b50f9434a85ab9a52856ae1b",
+    "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140678-f35cbe12-a512-44db-a990-23d3f07d73da.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160402Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=11f4f8fca2adc5012529ab631f1d14721fafeea991d3bfa48efa8eab2d6a294dd8cb261f623f8cd512f7a7e1e17b4d2a01eda97120376e30534536f6c75eff62a8b07f849e37c5eb13e1bbed6d01fb65ae837e7ac79b7a7a3d28d30bf9658e9294c23746e45e8e24844c277d63bff35237456636f7fdc8f49db64aed4d5c58cba1fe5948f57682268132c9803e44f8f8ade7ecd722d5174b433ff5d705d82709b07d0032ccd936af2149b1ebbc242111a0bf0f226b9f7d5bfff6bd715711bdc421d93fc4c5608e70419b8317be2a369ed1af4102495e6b52b6a05a88700dba46f38b4a28aa5910e0803f0b4994e37abeda7db5436cf890b4e50ec30db1e95e68",
+    "https://job-logs.eascdn.net/production/5200831f-9a63-4ecb-a08b-1c2b2f42f33e/1772035140883-b352d618-2c1f-465c-8fea-9fc176c6d7ff.txt?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=www-production%40exponentjs.iam.gserviceaccount.com%2F20260225%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260225T160402Z&X-Goog-Expires=900&X-Goog-SignedHeaders=host&X-Goog-Signature=b0bc8ce0c2c43971182e631ad55dd49c86dd1e73cf2ea9e29c073bb6daf4ae7bbebef41501276c20850215a3ef092debb4a5b41e7bf54f6116fbdab8d53923ed1f6f070c705f3887ae52c525dad6e206a761d52afe51751ab763a51e1b67b7001ed55fd0caa93583f0236e868723773bea9221a92eceba71304b74d1cdd043d84ad6cae812abb869881d06f0c3b84737635ef0b015d15232f669942e57e077b11c34723f6f4a037b62f774ad63d9059fc742ad9b786bd775a83a6570ce1129ba4d8cd45755ddca2fb909c4079509cfdf4e49a53620fcdbb676a6d122a0f19eb2f473bea64da0a72f321bfebef3d179359857e4b4ad71bade34180dfc3de131c0"
+  ],
+  "project": {
+    "id": "a235c461-49c0-43e4-8a90-ef13aabaa9d2",
+    "name": "lotomatrix",
+    "slug": "lotomatrix",
+    "ownerAccount": {
+      "id": "2fa5d69e-1376-49b9-85ec-fc3e0a4dca65",
+      "name": "teste_app"
+    }
+  },
+  "distribution": "INTERNAL",
+  "buildProfile": "preview",
+  "sdkVersion": "54.0.0",
+  "appVersion": "1.5.0",
+  "appBuildVersion": "3",
+  "runtimeVersion": "exposdk:54.0.0",
+  "gitCommitHash": "ce7acafa4a0c8fdf3e85f3e9627c847672eb5961",
+  "gitCommitMessage": "update: rankings automatizados ate o concurso 3620",
+  "priority": "NORMAL_PLUS",
+  "createdAt": "2026-02-25T15:58:54.777Z",
+  "updatedAt": "2026-02-25T16:04:01.967Z",
+  "expirationDate": "2026-03-11T15:58:54.833Z",
+  "isForIosSimulator": false
+}

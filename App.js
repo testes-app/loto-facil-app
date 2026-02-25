@@ -112,15 +112,21 @@ export default function App() {
     async function onFetchUpdateAsync() {
       try {
         const update = await Updates.checkForUpdateAsync();
+
+        // Alerta de diagnóstico (temporário para depuração)
+        const debugInfo = `Disponível: ${update.isAvailable}\nCanal: ${Updates.channel || 'Não definido'}\nRuntime: ${Updates.runtimeVersion}\nID Atual: ${Updates.updateId || 'Embutido'}`;
+        console.log(debugInfo);
+
         if (update.isAvailable) {
-          Alert.alert("Atualização Encontrada", "Baixando novos dados do concurso 3619...");
+          Alert.alert("Atualização Encontrada", "Baixando novas melhorias (v1.4)...");
           await Updates.fetchUpdateAsync();
-          Alert.alert("Sucesso", "Atualização aplicada! O app será reiniciado.", [
+          Alert.alert("Sucesso", "Atualização v1.4 baixada! Reiniciando...", [
             { text: "OK", onPress: () => Updates.reloadAsync() }
           ]);
         }
       } catch (error) {
         console.error("Error fetching latest Expo update:", error);
+        // Alert.alert("Erro de Update", error.message);
       }
     }
 

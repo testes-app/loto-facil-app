@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import {
     View, Text, StyleSheet, TouchableOpacity,
-    ScrollView, ActivityIndicator, Image
+    ScrollView, ActivityIndicator, Image, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import LotofacilAPI from '../services/LotofacilAPI';
+
+const BUNDLED_URGENCIA = {
+    17: require('../data/resultados/top10_17dezenas_3619concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3619concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3619concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3619concursos.json'),
+};
 
 export default function HomeScreen({ navigation }) {
     const [ultimoResultado, setUltimoResultado] = useState(null);
@@ -16,8 +23,30 @@ export default function HomeScreen({ navigation }) {
         carregarDados();
     }, []);
 
+    const limparCache = async () => {
+        try {
+            const keys = await AsyncStorage.getAllKeys();
+            const cacheKeys = keys.filter(k => k.startsWith('ranking_'));
+            if (cacheKeys.length > 0) {
+                await AsyncStorage.multiRemove(cacheKeys);
+            }
+            Alert.alert("Sucesso", "Cache de rankings excluído!");
+            carregarDados();
+        } catch (error) {
+            Alert.alert("Erro", "Falha ao limpar cache.");
+        }
+    };
+
     const carregarDados = async () => {
         setCarregando(true);
+        // Fallback imediato: carregar dados locais (v1.3)
+        const iniciais = [17, 18, 19, 20].map(dz => {
+            const data = BUNDLED_URGENCIA[dz];
+            const maisAtrasado = [...data].sort((a, b) => (b.atraso || 0) - (a.atraso || 0))[0];
+            return { dezenas: dz, atraso: maisAtrasado.atraso || 0 };
+        });
+        setUrgencias(iniciais);
+
         try {
             const resultados = await LotofacilAPI.buscarUltimosResultados(1);
             if (resultados && resultados.length > 0) {
@@ -69,7 +98,12 @@ export default function HomeScreen({ navigation }) {
                     style={styles.logo}
                 />
                 <Text style={styles.headerTitle}>LotoMatrix</Text>
-                <Text style={styles.headerSub}>Análise inteligente da Lotofácil</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={styles.headerSub}>Análise inteligente (v1.5.1-OTA)</Text>
+                    <TouchableOpacity onPress={limparCache} style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 4, borderRadius: 4 }}>
+                        <Ionicons name="trash-outline" size={16} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Último resultado */}

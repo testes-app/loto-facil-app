@@ -78,14 +78,63 @@ LotoMatrix/
 
 ---
 
-## 🚀 Build do APK
+## 🔄 Sistemas de Atualização
+
+O app possui **dois** sistemas de atualização independentes para evitar builds constantes:
+
+### 1. Atualização de Dados (Rankings)
+
+Os rankings são JSONs buscados diretamente do GitHub.
+
+- **Como funciona:** O script Python gera os dados -> faz push -> o app lê a URL "Raw".
+- **Frequência:** Diária (após cada concurso).
+- **Impacto:** Apenas os números e estatísticas mudam.
+
+### 2. Atualização de Código (EAS Update / OTA)
+
+Funcionalidades novas, cores, botões e correções de bugs no React Native.
+
+- **Como funciona:** Comando `eas update --branch production`.
+- **Identificação:** O app baixa em silêncio na 1ª abertura e aplica na 2ª abertura.
+
+---
+
+## 🔐 Entendendo o Runtime Version (Importante!)
+
+Para que o **EAS Update** funcione, o "Runtime" do APK instalado precisa ser compatível com a atualização publicada.
+
+### A Mudança para `sdkVersion` (v1.5.0+)
+
+Anteriormente, usávamos a policy `appVersion`. Isso era instável pois qualquer pequena mudança no APK impedia o recebimento de códigos novos (conflito de versões).
+
+**Configuração Atual (`app.json`):**
+
+```json
+"runtimeVersion": {
+  "policy": "sdkVersion"
+}
+```
+
+- **Vantagem:** O canal de atualização agora é baseado na versão do SDK do Expo (atualmente 54).
+- **Estabilidade:** Você pode instalar o APK v1.5.0 hoje e ele aceitará centenas de atualizações futuras sem precisar reinstalar o arquivo, desde que fiquem no mesmo SDK.
+
+> [!IMPORTANT]
+> **Regra de Ouro:** Se mudarmos algo "nativo" (como adicionar uma permissão de câmera ou Bluetooth), um novo build (`eas build`) será necessário. Para mudanças visuais e de lógica, apenas `eas update` resolve.
+
+---
+
+## 🚀 Build e Atualização
+
+### Novo APK (Mudanças Nativas)
 
 ```bash
-# Instalar dependências
-npm install
-
-# Build preview (APK Android)
 eas build --platform android --profile preview
+```
+
+### Novo Update (Mudanças de UI/Lógica)
+
+```bash
+eas update --branch production --message "Descrição da melhoria"
 ```
 
 ---
