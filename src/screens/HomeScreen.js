@@ -9,22 +9,56 @@ import LotofacilAPI from '../services/LotofacilAPI';
 export default function HomeScreen({ navigation }) {
     const [ultimoResultado, setUltimoResultado] = useState(null);
     const [carregando, setCarregando] = useState(true);
+    const [urgencias, setUrgencias] = useState([]);
+    const [carregandoUrgencias, setCarregandoUrgencias] = useState(false);
 
     useEffect(() => {
-        carregarUltimo();
+        carregarDados();
     }, []);
 
-    const carregarUltimo = async () => {
+    const carregarDados = async () => {
         setCarregando(true);
         try {
             const resultados = await LotofacilAPI.buscarUltimosResultados(1);
             if (resultados && resultados.length > 0) {
-                setUltimoResultado(resultados[0]);
+                const ultimo = resultados[0];
+                setUltimoResultado(ultimo);
+                carregarUrgencias(ultimo.concurso);
             }
         } catch (error) {
             console.log('Erro ao carregar:', error);
         }
         setCarregando(false);
+    };
+
+    const carregarUrgencias = async (concurso) => {
+        setCarregandoUrgencias(true);
+        const novasUrgencias = [];
+        const DEZENAS = [17, 18, 19, 20];
+
+        try {
+            for (const dz of DEZENAS) {
+                // Tenta buscar o ranking remoto
+                let data = await LotofacilAPI.fetchRemoteRankings(concurso, dz);
+
+                // Se não achar para o atual, tenta o anterior (fallback)
+                if (!data) {
+                    data = await LotofacilAPI.fetchRemoteRankings(concurso - 1, dz);
+                }
+
+                if (data && data.length > 0) {
+                    const maisAtrasado = [...data].sort((a, b) => (b.atraso || 0) - (a.atraso || 0))[0];
+                    novasUrgencias.push({
+                        dezenas: dz,
+                        atraso: maisAtrasado.atraso || 0
+                    });
+                }
+            }
+            setUrgencias(novasUrgencias);
+        } catch (error) {
+            console.log('Erro ao carregar urgencias:', error);
+        }
+        setCarregandoUrgencias(false);
     };
 
     return (
@@ -58,7 +92,7 @@ export default function HomeScreen({ navigation }) {
                 ) : (
                     <Text style={styles.semDados}>Sem dados disponíveis</Text>
                 )}
-                <TouchableOpacity style={styles.botaoAtualizar} onPress={carregarUltimo}>
+                <TouchableOpacity style={styles.botaoAtualizar} onPress={carregarDados}>
                     <Ionicons name="refresh" size={16} color="#fff" />
                     <Text style={styles.botaoTexto}>Atualizar</Text>
                 </TouchableOpacity>
@@ -76,7 +110,7 @@ export default function HomeScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Índice de Urgência (cross-category) */}
+            {/* Índice de Urgência (Destaques Dinâmicos) */}
             <TouchableOpacity
                 style={[styles.card, { backgroundColor: '#FFF5F5', borderColor: '#FEB2B2', borderWidth: 1 }]}
                 onPress={() => navigation.navigate('Painel')}
@@ -87,26 +121,22 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 <Text style={{ fontSize: 12, color: '#9B2C2C', marginBottom: 12 }}>Os jogos mais atrasados de cada categoria:</Text>
 
-                {[17, 18, 19, 20].map(dz => {
-                    const data = dz === 17 ? require('../data/resultados/top10_17dezenas_3620concursos.json') :
-                        dz === 18 ? require('../data/resultados/top10_18dezenas_3620concursos.json') :
-                            dz === 19 ? require('../data/resultados/top10_19dezenas_3620concursos.json') :
-                                require('../data/resultados/top10_20dezenas_3620concursos.json');
-
-                    // Pegar o mais atrasado (geralmente o que tem o maior 'atraso' ou o primeiro se sorted)
-                    const maisAtrasado = [...data].sort((a, b) => (b.atraso || 0) - (a.atraso || 0))[0];
-
-                    return (
-                        <View key={dz} style={styles.urgenciaItem}>
+                {carregandoUrgencias ? (
+                    <ActivityIndicator color="#C53030" size="small" />
+                ) : urgencias.length > 0 ? (
+                    urgencias.map(item => (
+                        <View key={item.dezenas} style={styles.urgenciaItem}>
                             <View style={styles.urgenciaBadge}>
-                                <Text style={styles.urgenciaBadgeTxt}>{dz} Dez</Text>
+                                <Text style={styles.urgenciaBadgeTxt}>{item.dezenas} Dez</Text>
                             </View>
                             <Text style={styles.urgenciaAtraso}>
-                                <Text style={{ fontWeight: 'bold' }}>{maisAtrasado.atraso || 0}</Text> sorteios sem acertos
+                                <Text style={{ fontWeight: 'bold' }}>{item.atraso}</Text> sorteios sem acertos
                             </Text>
                         </View>
-                    );
-                })}
+                    ))
+                ) : (
+                    <Text style={{ fontSize: 11, color: '#999', textAlign: 'center' }}>Carregando dados do servidor...</Text>
+                )}
             </TouchableOpacity>
         </ScrollView>
     );
