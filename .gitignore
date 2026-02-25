@@ -41,3 +41,14 @@ yarn-error.*
 /android
 AppData/
 node_modules/
+
+# Python scripts (não inclui no build do app)
+loto_core/__pycache__/
+loto_core/*.pyc
+__pycache__/
+*.pyc
+*.pyo
+
+# Cache de dados pesados (mantido localmente, não vai pro GitHub)
+lotofacil_cache.json
+lotofacil.csv
