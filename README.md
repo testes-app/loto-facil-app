@@ -4,6 +4,36 @@ App mobile (React Native / Expo) para análise e acompanhamento da **Lotofácil*
 
 ---
 
+## 📝 Changelog / Notas de Atualização
+
+### 26/02/2026 — Correção do cache do ranking + concurso 3621
+
+**Problema:** A aba Rankings sempre mostrava os dados do concurso 3620, mesmo depois de novos concursos.
+
+**Causa raiz:** O `AsyncStorage` guardava o cache com uma chave genérica (`ranking_17_3620`). Quando o app tentava buscar dados de um concurso mais recente e não encontrava no GitHub, caía no fallback bundled. O cache nunca era invalidado automaticamente.
+
+**O que foi corrigido (`LotofacilAPI.js` + `RankingsScreen.js`):**
+- Cache agora usa chave versionada `ranking_v2_{dezenas}_{concurso}` — caches antigos são ignorados automaticamente
+- O botão **⟳ (refresh)** agora **limpa todo o cache** antes de buscar, garantindo dados frescos do GitHub
+- O loop de busca foi limitado a 10 concursos atrás (antes ia até 3619, gerando centenas de requisições)
+- Adicionada função `clearRankingsCache()` no serviço para uso futuro
+
+**Dados atualizados:**
+- Concurso **3621** baixado da API da Caixa: `01 02 04 06 07 09 10 11 13 15 18 22 23 24 25`
+- JSONs `top10_{17/18/19/20}dezenas_3621concursos.json` gerados e publicados no GitHub
+- EAS Update publicado → canal `production` → ID `32266c04-1758-4738-8a81-ef224c74f66c`
+
+**Como atualizar amanhã (após concurso 3622+):**
+```powershell
+$env:PYTHONIOENCODING='utf-8'; python atualizar_rankings.py
+```
+Depois, se houve mudança de código, também publicar o EAS Update:
+```bash
+eas update --branch production --message "update: concurso XXXX"
+```
+
+---
+
 ## 📱 Funcionalidades
 
 - **Home** — Visão geral e último concurso
