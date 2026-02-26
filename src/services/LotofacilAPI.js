@@ -151,23 +151,24 @@ const LotofacilAPI = {
   },
 
   async fetchRemoteRankings(contest, dezenas) {
-    const cacheKey = `ranking_${dezenas}_${contest}`;
+    // A chave inclui o número do concurso para que caches de concursos
+    // anteriores NÃO sejam reutilizados quando há dados mais recentes.
+    const cacheKey = `ranking_v2_${dezenas}_${contest}`;
     try {
-      // 1. Tentar Cache
+      // 1. Verificar cache apenas se for do concurso atual
       const cached = await AsyncStorage.getItem(cacheKey);
       if (cached) {
-        console.log(`Usando cache para ${dezenas} dezenas no concurso ${contest}`);
+        console.log(`Cache válido para ${dezenas}dez / concurso ${contest}`);
         return JSON.parse(cached);
       }
 
-      // 2. Buscar Remoto (GitHub Raw)
+      // 2. Buscar no GitHub Raw
       const url = `https://raw.githubusercontent.com/testes-app/loto-master-app/master/src/data/resultados/top10_${dezenas}dezenas_${contest}concursos.json`;
       console.log(`Buscando remoto: ${url}`);
 
       const response = await axios.get(url, { timeout: 10000 });
 
       if (response.data && Array.isArray(response.data)) {
-        // Formatar para o padrão do app (atraso, counts, etc)
         const formatados = response.data.map(item => ({
           score: item.score,
           counts: item.counts,
@@ -175,14 +176,28 @@ const LotofacilAPI = {
           atraso: item.atraso || 0
         }));
 
-        // Salvar no Cache
+        // Salvar com chave versionada pelo concurso
         await AsyncStorage.setItem(cacheKey, JSON.stringify(formatados));
         return formatados;
       }
     } catch (error) {
-      console.log(`Erro ao buscar ${dezenas} remotamente para ${contest}:`, error.message);
+      console.log(`Erro ao buscar ${dezenas}dez para concurso ${contest}:`, error.message);
     }
     return null;
+  },
+
+  // Limpa todo o cache de rankings (útil para forçar atualização manual)
+  async clearRankingsCache() {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      const rankingKeys = keys.filter(k => k.startsWith('ranking_'));
+      if (rankingKeys.length > 0) {
+        await AsyncStorage.multiRemove(rankingKeys);
+        console.log(`Cache limpo: ${rankingKeys.length} entradas removidas.`);
+      }
+    } catch (error) {
+      console.log('Erro ao limpar cache:', error.message);
+    }
   }
 };
 

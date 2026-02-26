@@ -28,9 +28,14 @@ export default function RankingsScreen() {
         carregarDadosRemotos();
     }, []);
 
-    const carregarDadosRemotos = async () => {
+    const carregarDadosRemotos = async (forcarAtualizacao = false) => {
         setCarregando(true);
         try {
+            // Se for atualização manual, limpar cache para buscar dados frescos
+            if (forcarAtualizacao) {
+                await LotofacilAPI.clearRankingsCache();
+            }
+
             // 1. Pegar o último concurso oficial
             const res = await LotofacilAPI.buscarUltimosResultados(1);
             if (res && res.length > 0) {
@@ -38,19 +43,24 @@ export default function RankingsScreen() {
                 setUltimoSorteio(ultimo);
                 const concursoAPI = ultimo.concurso;
 
-                // 2. Tentar buscar rankings para o concurso atual e anteriores (até o bundled 3619)
+                // 2. Tentar buscar rankings para o concurso atual e até 5 anteriores
                 const novosDados = { ...BUNDLED_DATA };
                 let maiorBaseEncontrada = 3619;
 
                 for (const d of DEZENAS) {
-                    // Tentar do mais recente para trás
-                    for (let c = concursoAPI; c > 3619; c--) {
+                    let encontrou = false;
+                    // Tentar do mais recente para trás (até 10 concursos antes)
+                    for (let c = concursoAPI; c > Math.max(3619, concursoAPI - 10); c--) {
                         const remoto = await LotofacilAPI.fetchRemoteRankings(c, d);
                         if (remoto) {
                             novosDados[d] = remoto;
                             if (c > maiorBaseEncontrada) maiorBaseEncontrada = c;
-                            break; // Achou o mais recente para essa dezena
+                            encontrou = true;
+                            break;
                         }
+                    }
+                    if (!encontrou) {
+                        console.log(`Não encontrou ranking remoto para ${d} dezenas`);
                     }
                 }
 
@@ -159,7 +169,7 @@ export default function RankingsScreen() {
                         {carregando ? (
                             <ActivityIndicator size="small" color="#8B5CF6" />
                         ) : (
-                            <TouchableOpacity onPress={carregarDadosRemotos}>
+                            <TouchableOpacity onPress={() => carregarDadosRemotos(true)}>
                                 <Ionicons name="refresh" size={20} color="#8B5CF6" />
                             </TouchableOpacity>
                         )}
