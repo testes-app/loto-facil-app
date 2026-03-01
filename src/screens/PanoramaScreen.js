@@ -18,16 +18,16 @@ const CATEGORIES = [
 ];
 
 const BUNDLED_DATA = {
-    17: require('../data/resultados/top10_17dezenas_3619concursos.json'),
-    18: require('../data/resultados/top10_18dezenas_3619concursos.json'),
-    19: require('../data/resultados/top10_19dezenas_3619concursos.json'),
-    20: require('../data/resultados/top10_20dezenas_3619concursos.json'),
+    17: require('../data/resultados/top10_17dezenas_3624concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3624concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3624concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3624concursos.json'),
 };
 
 export default function PanoramaScreen() {
     const [filtro, setFiltro] = useState('todos');
     const [dadosDinamicos, setDadosDinamicos] = useState(BUNDLED_DATA);
-    const [baseConcursos, setBaseConcursos] = useState(3619);
+    const [baseConcursos, setBaseConcursos] = useState(3624);
     const [carregando, setCarregando] = useState(false);
 
     useEffect(() => {
@@ -41,10 +41,10 @@ export default function PanoramaScreen() {
             if (res && res.length > 0) {
                 const concursoAPI = res[0].concurso;
                 const novosDados = { ...BUNDLED_DATA };
-                let maiorBase = 3619;
+                let maiorBase = 3624;
 
                 for (const d of [17, 18, 19, 20]) {
-                    for (let c = concursoAPI; c > 3619; c--) {
+                    for (let c = concursoAPI; c > 3624; c--) {
                         const remoto = await LotofacilAPI.fetchRemoteRankings(c, d);
                         if (remoto) {
                             novosDados[d] = remoto;

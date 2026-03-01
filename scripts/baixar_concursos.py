@@ -8,8 +8,10 @@ print("Isso pode demorar alguns minutos...\n")
 
 resultados = []
 
-for i in range(1, 3621):
+# Tentar baixar até o último disponível (limite de segurança 5000)
+for i in range(1, 5000):
     url = f"https://servicebus2.caixa.gov.br/portaldeloterias/api/lotofacil/{i}"
+
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as r:

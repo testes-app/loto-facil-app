@@ -13,21 +13,26 @@ App mobile (React Native / Expo) para análise e acompanhamento da **Lotofácil*
 **Causa raiz:** O `AsyncStorage` guardava o cache com uma chave genérica (`ranking_17_3620`). Quando o app tentava buscar dados de um concurso mais recente e não encontrava no GitHub, caía no fallback bundled. O cache nunca era invalidado automaticamente.
 
 **O que foi corrigido (`LotofacilAPI.js` + `RankingsScreen.js`):**
+
 - Cache agora usa chave versionada `ranking_v2_{dezenas}_{concurso}` — caches antigos são ignorados automaticamente
 - O botão **⟳ (refresh)** agora **limpa todo o cache** antes de buscar, garantindo dados frescos do GitHub
 - O loop de busca foi limitado a 10 concursos atrás (antes ia até 3619, gerando centenas de requisições)
 - Adicionada função `clearRankingsCache()` no serviço para uso futuro
 
 **Dados atualizados:**
+
 - Concurso **3621** baixado da API da Caixa: `01 02 04 06 07 09 10 11 13 15 18 22 23 24 25`
 - JSONs `top10_{17/18/19/20}dezenas_3621concursos.json` gerados e publicados no GitHub
 - EAS Update publicado → canal `production` → ID `32266c04-1758-4738-8a81-ef224c74f66c`
 
 **Como atualizar amanhã (após concurso 3622+):**
+
 ```powershell
-$env:PYTHONIOENCODING='utf-8'; python atualizar_rankings.py
+$env:PYTHONIOENCODING='utf-8'; python scripts/atualizar_rankings.py
 ```
+
 Depois, se houve mudança de código, também publicar o EAS Update:
+
 ```bash
 eas update --branch production --message "update: concurso XXXX"
 ```
@@ -57,7 +62,7 @@ Os rankings são gerados pelos scripts Python e ficam armazenados como JSONs no 
 
 **O app busca dados em 3 camadas:**
 
-```
+```bash
 1. Cache local (AsyncStorage)        ← mais rápido
 2. GitHub Raw (dados remotos)        ← atualizado sem build
 3. Bundled (incluído no APK)         ← fallback offline
@@ -67,7 +72,7 @@ Os rankings são gerados pelos scripts Python e ficam armazenados como JSONs no 
 
 ```bash
 # Na raiz do projeto:
-python atualizar_rankings.py
+python scripts/atualizar_rankings.py
 ```
 
 O script faz automaticamente:
@@ -83,24 +88,28 @@ O script faz automaticamente:
 
 ## 📁 Estrutura relevante
 
-```
+```text
 LotoMatrix/
-├── atualizar_rankings.py          # Script de atualização dos rankings
-├── loto_core/                     # Módulos Python de análise
+├── scripts/                       # Scripts Python de análise e manutenção
+│   ├── atualizar_rankings.py      # Script principal de atualização
+│   ├── menu.py                    # Atalho para o menu do desktop
+│   └── ...                        # Outras ferramentas de análise
+├── data/                          # Cache e arquivos de dados JSON
+│   ├── lotofacil_cache.json
+│   └── resultados_lotofacil.json
+├── loto_core/                     # Módulos Python de lógica (core)
 │   ├── config.py
 │   ├── data.py
 │   ├── logic.py
 │   ├── results.py
 │   └── utils.py
-├── resultados/                    # JSONs de rankings (versionados)
+├── resultados/                    # JSONs de rankings por concurso
 ├── src/
 │   ├── data/resultados/           # Cópia dos JSONs (bundled no app)
 │   ├── screens/
-│   │   ├── HomeScreen.js
-│   │   ├── HistoryScreen.js
-│   │   └── RankingsScreen.js
 │   └── services/
-│       └── LotofacilAPI.js        # Fetch da API da Caixa + GitHub
+├── build_logs/                    # Logs e metadados de builds (EAS/Android)
+├── backups/                       # Backups de arquivos importantes
 ├── app.json
 ├── eas.json
 └── package.json

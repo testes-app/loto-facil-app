@@ -50,5 +50,6 @@ __pycache__/
 *.pyo
 
 # Cache de dados pesados (mantido localmente, não vai pro GitHub)
-lotofacil_cache.json
+# lotofacil_cache.json
 lotofacil.csv
+

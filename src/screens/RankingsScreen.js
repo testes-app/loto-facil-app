@@ -10,10 +10,10 @@ const DEZENAS = [17, 18, 19, 20];
 
 // Fallback data (bundled) - Mantendo 3619 como base fixa para evitar crashes em builds antigas
 const BUNDLED_DATA = {
-    17: require('../data/resultados/top10_17dezenas_3619concursos.json'),
-    18: require('../data/resultados/top10_18dezenas_3619concursos.json'),
-    19: require('../data/resultados/top10_19dezenas_3619concursos.json'),
-    20: require('../data/resultados/top10_20dezenas_3619concursos.json'),
+    17: require('../data/resultados/top10_17dezenas_3624concursos.json'),
+    18: require('../data/resultados/top10_18dezenas_3624concursos.json'),
+    19: require('../data/resultados/top10_19dezenas_3624concursos.json'),
+    20: require('../data/resultados/top10_20dezenas_3624concursos.json'),
 };
 
 export default function RankingsScreen() {
@@ -21,7 +21,7 @@ export default function RankingsScreen() {
     const [urgentes, setUrgentes] = useState(false);
     const [ultimoSorteio, setUltimoSorteio] = useState(null);
     const [dadosDinamicos, setDadosDinamicos] = useState(BUNDLED_DATA);
-    const [baseConcursos, setBaseConcursos] = useState(3619);
+    const [baseConcursos, setBaseConcursos] = useState(3624);
     const [carregando, setCarregando] = useState(false);
 
     useEffect(() => {
@@ -45,12 +45,12 @@ export default function RankingsScreen() {
 
                 // 2. Tentar buscar rankings para o concurso atual e até 5 anteriores
                 const novosDados = { ...BUNDLED_DATA };
-                let maiorBaseEncontrada = 3619;
+                let maiorBaseEncontrada = 3624;
 
                 for (const d of DEZENAS) {
                     let encontrou = false;
                     // Tentar do mais recente para trás (até 10 concursos antes)
-                    for (let c = concursoAPI; c > Math.max(3619, concursoAPI - 10); c--) {
+                    for (let c = concursoAPI; c > Math.max(3624, concursoAPI - 10); c--) {
                         const remoto = await LotofacilAPI.fetchRemoteRankings(c, d);
                         if (remoto) {
                             novosDados[d] = remoto;

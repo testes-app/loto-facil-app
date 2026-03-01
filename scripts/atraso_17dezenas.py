@@ -1,7 +1,13 @@
 import json
 from itertools import combinations
 
-with open("resultados_lotofacil.json", "r") as f:
+import os
+
+# Caminho para os dados
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_FILE = os.path.join(BASE_DIR, "data", "resultados_lotofacil.json")
+
+with open(DATA_FILE, "r") as f:
     resultados = json.load(f)
 
 sorteios = [(c, set(n)) for c, n in resultados]

@@ -24,12 +24,16 @@ import requests
 from datetime import datetime
 
 # ─── Configuração ────────────────────────────────────────────────────────────
-BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
-CACHE_FILE    = os.path.join(BASE_DIR, "lotofacil_cache.json")
+SCRIPT_DIR    = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR      = os.path.dirname(SCRIPT_DIR) # Root of the project
+CACHE_FILE    = os.path.join(BASE_DIR, "data", "lotofacil_cache.json")
 RESULTS_DIR   = os.path.join(BASE_DIR, "resultados")
 FRONTEND_DIR  = os.path.join(BASE_DIR, "src", "data", "resultados")
 
-DEZENAS_CONFIG = [17, 18, 19, 20]
+# Pasta do menu do Desktop (sincronizada automaticamente)
+DESKTOP_DIR   = os.path.join(os.path.expanduser("~"), "Desktop", "17 top1")
+
+DEZENAS_CONFIG = [15, 17, 18, 19, 20]
 TOP_N          = 10  # quantos jogos salvar por ranking
 
 PESOS = {15: 1000, 14: 200, 13: 30, 12: 5, 11: 1}
@@ -218,16 +222,42 @@ def salvar_e_copiar(dados, tamanho, total_concursos):
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
     shutil.copy(caminho_results, caminho_frontend)
-    log(f"   💾 Salvo: {nome}", VERDE)
+    log(f"   ✅ Salvo: {nome}", VERDE)
+
+# ─── 3b. Sincronizar Desktop ─────────────────────────────────────────────────
+def sincronizar_desktop(total_concursos):
+    """Copia o cache e os rankings para a pasta do Desktop (menu.py)."""
+    if not os.path.isdir(DESKTOP_DIR):
+        log(f"   ⚠️  Desktop/17 top1 não encontrado. Pulando sync.", AMARELO)
+        return
+
+    log(f"\n�️  Sincronizando Desktop/17 top1...", CIANO)
+
+    # 1. Copiar cache
+    dest_cache = os.path.join(DESKTOP_DIR, "lotofacil_cache.json")
+    shutil.copy(CACHE_FILE, dest_cache)
+    log(f"   ✅ Cache copiado ({total_concursos} concursos)", VERDE)
+
+    # 2. Copiar JSONs de ranking
+    desktop_results = os.path.join(DESKTOP_DIR, "resultados")
+    os.makedirs(desktop_results, exist_ok=True)
+    for d in [17, 18, 19, 20]:
+        nome = f"top10_{d}dezenas_{total_concursos}concursos.json"
+        src  = os.path.join(RESULTS_DIR, nome)
+        if os.path.exists(src):
+            shutil.copy(src, os.path.join(desktop_results, nome))
+            log(f"   ✅ {nome}", VERDE)
+
 
 # ─── 4. Git push ─────────────────────────────────────────────────────────────
 def git_push(total_concursos):
     log(f"\n🚀 Fazendo push para o GitHub (concurso {total_concursos})...", CIANO)
     try:
-        subprocess.run(["git", "add",
-            "resultados/",
-            "src/data/resultados/",
-            "lotofacil_cache.json"
+        # Usar -f para garantir que o cache seja adicionado mesmo se estiver no gitignore por engano
+        subprocess.run(["git", "add", "-f",
+            os.path.join(BASE_DIR, "resultados/"),
+            os.path.join(BASE_DIR, "src/data/resultados/"),
+            os.path.join(BASE_DIR, "data/lotofacil_cache.json")
         ], cwd=BASE_DIR, check=True)
 
         msg = f"update: rankings atualizados até o concurso {total_concursos}"
@@ -266,8 +296,11 @@ def main():
     # 3. Push para GitHub
     if houve_atualizacao:
         git_push(total_concursos)
+        sincronizar_desktop(total_concursos)
     else:
         log("\n✅ Nenhuma atualização necessária.", VERDE)
+        # Mesmo sem novos dados, garantir que o Desktop esteja sincronizado
+        sincronizar_desktop(total_concursos)
 
     log(f"\n{'='*60}\n", NEGRITO)
 
