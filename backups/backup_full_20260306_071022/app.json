@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "LotoMatrix",
+    "slug": "lotomatrix",
+    "version": "1.5.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A0B2E"
+    },
+    "android": {
+      "package": "com.lotomatrix.app"
+    },
+    "owner": "teste_app",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 10000,
+      "url": "https://u.expo.dev/a235c461-49c0-43e4-8a90-ef13aabaa9d2"
+    },
+    "ios": {},
+    "extra": {
+      "eas": {
+        "projectId": "a235c461-49c0-43e4-8a90-ef13aabaa9d2"
+      }
+    }
+  }
+}

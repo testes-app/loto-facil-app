@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LotoMatrix | Elite Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #060410;
+            --bg-card: rgba(13, 10, 36, 0.6);
+            --accent-primary: #8B5CF6;
+            --accent-secondary: #D946EF;
+            --neon-blue: #38BDF8;
+            --neon-purple: #A78BFA;
+            --text-primary: #F8FAFC;
+            --text-dim: #94A3B8;
+            --border-glow: rgba(139, 92, 246, 0.3);
+        }
+
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 100% 100%, rgba(217, 70, 239, 0.1) 0%, transparent 35%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: var(--bg-card);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .sidebar-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, transparent 100%);
+            color: var(--neon-purple);
+        }
+
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 4px;
+            background: var(--accent-primary);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
+
+        .loto-ball {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-weight: 800;
+            background: #151125;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+        }
+
+        .loto-ball.hot {
+            background: linear-gradient(135deg, #F43F5E 0%, #991B1B 100%);
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.5);
+            border-color: #F87171;
+            animation: pulsate-neon 2s infinite ease-in-out;
+        }
+
+        @keyframes pulsate-neon {
+
+            0%,
+            100% {
+                box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+                border-color: rgba(139, 92, 246, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(139, 92, 246, 0.7);
+                border-color: rgba(139, 92, 246, 0.9);
+            }
+        }
+
+        .hot-glow {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            animation: pulsate-neon 2s infinite ease-in-out;
+        }
+
+        .loto-ball.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1E1B38;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* NEXUS THEME [NEW Phase 8] */
+        body.theme-nexus {
+            --bg-main: #F8FAFC;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --accent-primary: #3B82F6;
+            --accent-secondary: #06B6D4;
+            --neon-blue: #0EA5E9;
+            --neon-purple: #8B5CF6;
+            --text-primary: #1E293B;
+            --text-dim: #64748B;
+            --border-glow: rgba(59, 130, 246, 0.2);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 35%),
+                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.05) 0%, transparent 35%);
+        }
+
+        body.theme-nexus .glass-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        body.theme-nexus .text-white {
+            color: var(--text-primary) !important;
+        }
+
+        body.theme-nexus h3.text-white,
+        body.theme-nexus h2.text-white {
+            color: var(--text-primary) !important;
+        }
+
+        body.theme-nexus .text-slate-300 {
+            color: #475569 !important;
+        }
+
+        body.theme-nexus .text-slate-400 {
+            color: #64748B !important;
+        }
+
+        body.theme-nexus .text-slate-500 {
+            color: #64748B !important;
+        }
+
+        body.theme-nexus .sidebar-item {
+            color: #64748B;
+        }
+
+        body.theme-nexus .sidebar-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563EB;
+        }
+
+        body.theme-nexus .loto-ball {
+            background: #F1F5F9;
+            border-color: rgba(0, 0, 0, 0.05);
+            color: #475569;
+        }
+
+        body.theme-nexus .bg-white\/5 {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        body.theme-nexus .border-white\/5 {
+            border-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body.theme-nexus .border-white\/10 {
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body.theme-nexus aside {
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.theme-nexus header,
+        body.theme-nexus .border-r {
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-72 h-screen glass-card flex flex-col fixed left-0 top-0 border-r border-white/5 z-50">
+        <div class="p-8">
+            <h1
+                class="text-2xl font-black tracking-tighter italic bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                LOTOMATRIX
+            </h1>
+            <p class="text-[10px] text-slate-500 font-bold tracking-[0.3em] mt-1 uppercase">Elite Analytics v3.0</p>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-1">
+            <button data-view="dashboard"
+                class="sidebar-item active w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5">
+                <i data-lucide="layout-grid" size="20"></i> Dashboard
+            </button>
+            <button data-view="panorama"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="bar-chart-3" size="20"></i> Panorama Elite
+            </button>
+            <button data-view="simulator"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="cpu" size="20"></i> Gerador Neural
+            </button>
+            <button data-view="closings"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="boxes" size="20"></i> Fechamentos
+            </button>
+            <button data-view="history"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="scroll-text" size="20"></i> Histórico
+            </button>
+            <button data-view="prediction"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="brain-circuit" size="20"></i> Prediction Pro 2.0
+            </button>
+            <button data-view="analytics"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="line-chart" size="20"></i> Elite Analytics+
+            </button>
+            <button data-view="saved"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="bookmark" size="20"></i> Meus Jogos
+            </button>
+            <button data-view="multi-gen"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="layers-3" size="20"></i> Multi-Gerador
+            </button>
+            <button data-view="comparator"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="check-square" size="20"></i> Comparador Pro
+            </button>
+            <button data-view="trends"
+                class="sidebar-item w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-semibold hover:bg-white/5 text-slate-400">
+                <i data-lucide="trending-up" size="20"></i> Evolução de Tendências
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-white/5">
+            <div class="glass-card p-4 rounded-2xl flex items-center gap-4 bg-purple-500/5">
+                <div
+                    class="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i data-lucide="shield-check" class="text-white" size="20"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Status Access</p>
+                    <p class="text-xs font-black text-white">ELITE LICENSE</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="ml-72 flex-1 min-h-screen p-10 pb-20 relative">
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-12">
+            <div>
+                <h2 id="view-title" class="text-4xl font-black text-white tracking-tight">Dashboard Central</h2>
+                <p id="view-subtitle" class="text-slate-500 text-sm mt-1">Análise dinâmica em tempo real do último
+                    concurso.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Theme Switcher [NEW Phase 8] -->
+                <button id="btn-theme-toggle" title="Alternar Tema"
+                    class="w-12 h-12 glass-card rounded-2xl flex items-center justify-center hover:bg-white/5 active:scale-95 transition">
+                    <i data-lucide="sun" id="theme-icon" size="18" class="text-yellow-400"></i>
+                </button>
+                <div class="text-right px-4 border-r border-white/10">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Base de Dados</p>
+                    <p id="total-contests" class="text-sm font-black text-white">--- CONCURSOS</p>
+                </div>
+                <button id="btn-refresh" title="Atualizar Dados"
+                    class="w-12 h-12 glass-card rounded-2xl flex items-center justify-center hover:bg-white/5 active:scale-95 transition">
+                    <i data-lucide="refresh-cw" size="18" class="text-slate-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="content-view space-y-10 animate-fade-in">
+            <!-- Summary Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Last Contest -->
+                <div class="glass-card p-8 rounded-[32px] md:col-span-2 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <p class="text-[10px] text-purple-400 font-black uppercase tracking-[0.2em] mb-1">Último
+                                Sorteio</p>
+                            <h3 id="last-contest-id" class="text-4xl font-black text-white tracking-tighter">#----</h3>
+                        </div>
+                        <i data-lucide="zap" class="text-yellow-400 fill-yellow-400/20" size="24"></i>
+                    </div>
+                    <div id="last-numbers" class="flex flex-wrap gap-3">
+                        <!-- Numbers injected here -->
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="glass-card p-8 rounded-[32px] flex flex-col justify-center">
+                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-2">Frequência Alta</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="hot-count" class="text-4xl font-black text-emerald-400">--</span>
+                        <span class="text-xs text-slate-500 font-bold">Números</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[32px] flex flex-col justify-center border-l-4 border-l-rose-500">
+                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-2">Atrasos Críticos
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="delay-count" class="text-4xl font-black text-rose-400">--</span>
+                        <span class="text-xs text-slate-500 font-bold">Zonas</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cycle Tracker [NEW Phase 8] -->
+            <div class="glass-card p-8 rounded-[32px] border-t border-purple-500/10">
+                <div class="flex items-center justify-between mb-6">
+                    <h4 class="font-black text-lg text-white flex items-center gap-2">
+                        <i data-lucide="rotate-ccw" size="18" class="text-indigo-400"></i> Rastreador de Ciclo
+                    </h4>
+                    <div class="flex gap-4 items-center">
+                        <span id="cycle-percentage"
+                            class="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest">0%
+                            CONCLUÍDO</span>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div id="cycle-progress-bar"
+                            class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-1000"
+                            style="width: 0%"></div>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Dezenas Devidas
+                            (Ainda não sorteadas neste ciclo)</p>
+                        <div id="missing-cycle-balls" class="flex flex-wrap gap-2">
+                            <!-- Injected by Dashboard.js -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 glass-card p-8 rounded-[32px]">
+                    <div class="flex items-center justify-between mb-8">
+                        <h4 class="font-black text-lg text-white flex items-center gap-2">
+                            <i data-lucide="grid" size="18" class="text-purple-400"></i> Heatmap de Tendência
+                        </h4>
+                        <div class="flex gap-2">
+                            <div class="w-3 h-3 rounded bg-emerald-500/20"></div>
+                            <div class="w-3 h-3 rounded bg-emerald-500/60"></div>
+                            <div class="w-3 h-3 rounded bg-emerald-500"></div>
+                        </div>
+                    </div>
+                    <div id="heatmap-grid" class="grid grid-cols-5 gap-4">
+                        <!-- Heatmap cells injected here -->
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-[32px]">
+                    <h4 class="font-black text-lg text-white mb-6 flex items-center gap-2">
+                        <i data-lucide="trending-up" size="18" class="text-pink-400"></i> Sugestão AI
+                    </h4>
+                    <div id="ai-suggestion" class="space-y-6">
+                        <div id="suggestion-balls" class="mb-4">
+                            <!-- Suggested numbers -->
+                        </div>
+                        <div class="flex gap-2 mb-6">
+                            <button onclick="saveCurrentAISuggestion()"
+                                class="flex-1 py-3 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-black text-slate-300 hover:bg-white/10 transition uppercase">Salvar
+                                Jogo</button>
+                            <button onclick="testCurrentAISuggestion()"
+                                class="flex-1 py-3 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-black text-slate-300 hover:bg-white/10 transition uppercase">Testar
+                                Performance</button>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">Grau de Confiança</p>
+                            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                <div
+                                    class="w-4/5 h-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]">
+                                </div>
+                            </div>
+                            <p class="text-right text-[10px] text-purple-400 font-black mt-1">82.4%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW PLACEHOLDERS -->
+        <section id="view-panorama" class="content-view hidden animate-fade-in space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ranking-container">
+            </div>
+        </section>
+
+        <!-- NEURAL GENERATOR (SIMULATOR) -->
+        <section id="view-simulator" class="content-view hidden animate-fade-in space-y-10">
+            <!-- Simulator Controls -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 glass-card p-10 rounded-[40px]">
+                    <div class="flex justify-between items-center mb-10">
+                        <h4 class="text-xl font-black text-white uppercase tracking-widest">Painel de Seleção</h4>
+                        <div class="flex gap-2">
+                            <button onclick="clearSimulator()"
+                                class="px-4 py-2 rounded-xl bg-white/5 text-[10px] font-bold text-slate-500 hover:text-white transition">LIMPAR
+                                TUDO</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-5 gap-3 mb-10" id="sim-selector">
+                        <!-- Numbers 01-25 injected via JS -->
+                    </div>
+
+                    <!-- MATH FILTERS -->
+                    <div class="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h5 class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Filtros
+                                Matemáticos Elite</h5>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-500 uppercase mb-2">Soma
+                                    Ideal</label>
+                                <select id="filter-sum" title="Filtro de Soma Total"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="170-220">Padrão (170-220)</option>
+                                    <option value="180-210">Elite (180-210)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[9px] font-black text-slate-500 uppercase mb-2">Pares/Ímpares</label>
+                                <select id="filter-parity" title="Filtro de Paridade"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="7-8">Equilibrado (7/8 ou 8/7)</option>
+                                    <option value="6-9">Amplo (6-9)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-500 uppercase mb-2">Moldura</label>
+                                <select id="filter-frame" title="Filtro de Moldura"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="9-11">Padrão (9-11)</option>
+                                </select>
+                            </div>
+                            <!-- NEW FILTERS Phase 8 -->
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-500 uppercase mb-2">Primos</label>
+                                <select id="filter-prime" title="Filtro de Números Primos"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="5-6">Padrão (5-6)</option>
+                                    <option value="4-7">Amplo (4-7)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[9px] font-black text-slate-500 uppercase mb-2">Fibonacci</label>
+                                <select id="filter-fibo" title="Filtro de Fibonacci"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="4-5">Padrão (4-5)</option>
+                                    <option value="3-6">Amplo (3-6)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-black text-slate-500 uppercase mb-2">Repetidos
+                                    Anterior</label>
+                                <select id="filter-repeat" title="Filtro de Repetidos"
+                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white outline-none">
+                                    <option value="any">Qualquer</option>
+                                    <option value="8-10">Padrão (8-10)</option>
+                                    <option value="7-11">Amplo (7-11)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-gen-neural"
+                        class="w-full mt-8 py-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-3xl font-black text-white shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3">
+                        <i data-lucide="brain"></i> GERAR JOGO NEURAL
+                    </button>
+                </div>
+
+                <!-- Analysis Panel -->
+                <div class="lg:col-span-1 space-y-8">
+                    <div class="glass-card p-10 rounded-[32px] min-h-[400px] flex flex-col items-center justify-center text-center overflow-hidden relative"
+                        id="sim-results">
+                        <div class="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent"></div>
+                        <div id="sim-main-content" class="relative z-10 flex flex-col items-center">
+                            <i data-lucide="brain-circuit" size="64" class="text-purple-500/20 mb-6"></i>
+                            <h3 class="text-2xl font-black text-white mb-2">Motor de Inferência</h3>
+                            <p class="text-sm text-slate-500 max-w-sm">Selecione dezenas base ou use o gerador
+                                automático
+                                para processar padrões probabilísticos.</p>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Overlay for Simulator -->
+                    <div id="sim-stats-grid"
+                        class="mt-8 grid grid-cols-3 gap-4 opacity-0 transition-opacity duration-500">
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                            <p class="text-[9px] text-slate-500 font-black uppercase mb-1">Soma</p>
+                            <p id="stat-sum" class="text-lg font-black text-white">--</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                            <p class="text-[9px] text-slate-500 font-black uppercase mb-1">Divergência</p>
+                            <p id="stat-divergence" class="text-lg font-black text-purple-400">--</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-white/5 border border-white/5">
+                            <p class="text-[9px] text-slate-500 font-black uppercase mb-1">Tendência</p>
+                            <p id="stat-trend" class="text-lg font-black text-emerald-400">--</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 text-center">
+                        <button id="btn-clear-sim" title="Limpar Seleção"
+                            class="text-[10px] font-black text-slate-600 hover:text-white transition uppercase tracking-widest">Zerar
+                            Analisador</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALYTICS PLUS VIEW (Including Performance Pro) -->
+        <section id="view-analytics" class="content-view hidden animate-fade-in space-y-10">
+            <!-- Performance Pro Header -->
+            <div class="glass-card p-8 rounded-[40px] border-l-4 border-l-purple-500">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black text-white">Performance Pro</h3>
+                        <p class="text-sm text-slate-500 mt-1">Teste retroativo de alta performance contra 3600+
+                            concursos.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 mb-8">
+                    <input type="text" id="perf-numbers" placeholder="Ex: 01 02 03..."
+                        class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold outline-none focus:border-purple-500/50 transition">
+                    <button onclick="runPerformanceTest()"
+                        class="px-8 py-4 bg-purple-600 hover:bg-purple-500 rounded-2xl font-black text-sm text-white transition">TESTAR
+                        AGORA</button>
+                </div>
+                <div id="perf-results" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in">
+                    <!-- Results injected here -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Bubble Chart -->
+                <div class="glass-card p-8 rounded-[32px]">
+                    <h4 class="font-black text-white mb-6 flex items-center gap-2">
+                        <i data-lucide="scatter-chart" size="18" class="text-purple-400"></i> Frequência vs Recorrência
+                    </h4>
+                    <div class="h-[350px] relative">
+                        <canvas id="bubbleChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Top Triplets -->
+                <div class="glass-card p-8 rounded-[32px]">
+                    <h4 class="font-black text-white mb-6 flex items-center gap-2">
+                        <i data-lucide="layers" size="18" class="text-pink-400"></i> Melhores Trios (Últ. 100)
+                    </h4>
+                    <div id="triplets-list" class="space-y-3">
+                        <!-- Triplets injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SAVED GAMES VIEW -->
+        <section id="view-saved" class="content-view hidden animate-fade-in space-y-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-white uppercase tracking-widest">Meus Jogos Salvos</h3>
+                <div class="flex gap-4">
+                    <button onclick="exportSavedToCSV()"
+                        class="px-6 py-2 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black hover:bg-emerald-600 hover:text-white transition uppercase">Exportar
+                        CSV</button>
+                    <button onclick="exportSavedToTXT()"
+                        class="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black text-slate-400 hover:text-white transition uppercase">Exportar
+                        TXT</button>
+                    <button onclick="clearAllSaved()"
+                        class="px-6 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[10px] font-black text-rose-400 hover:bg-rose-500 hover:text-white transition uppercase tracking-widest">Limpar
+                        Tudo</button>
+                </div>
+            </div>
+            <div id="saved-games-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Saved games injected here -->
+            </div>
+        </section>
+
+        <!-- MULTI-GENERATOR VIEW -->
+        <section id="view-multi-gen" class="content-view hidden animate-fade-in space-y-10">
+            <div class="glass-card p-10 rounded-[40px] border-l-4 border-l-indigo-500">
+                <h3 class="text-2xl font-black text-white mb-6">Gerador de Massa Elite</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">Qtde de Jogos</label>
+                        <select id="multi-gen-count" title="Quantidade de Jogos para Gerar"
+                            class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white font-bold outline-none">
+                            <option value="10">10 Jogos</option>
+                            <option value="24">24 Jogos</option>
+                            <option value="50">50 Jogos</option>
+                            <option value="100">100 Jogos</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-black text-slate-500 uppercase mb-2">Filtros Ativos</label>
+                        <div class="flex gap-4 text-xs font-bold text-slate-400 py-3">
+                            <span class="flex items-center gap-1"><i data-lucide="check-circle" size="14"
+                                    class="text-emerald-500"></i> Soma (170-220)</span>
+                            <span class="flex items-center gap-1"><i data-lucide="check-circle" size="14"
+                                    class="text-emerald-500"></i> Pares (7-9)</span>
+                        </div>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="runMultiGen()"
+                            class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-black text-white transition shadow-lg shadow-indigo-500/20">GERAR
+                            LOTE</button>
+                    </div>
+                </div>
+                <div id="multi-gen-results" class="hidden space-y-4">
+                    <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl mb-4">
+                        <p id="multi-gen-summary" class="text-xs font-black text-slate-400 uppercase"></p>
+                        <button onclick="saveAllMultiGen()"
+                            class="px-4 py-2 rounded-xl bg-purple-600/20 text-purple-400 text-[10px] font-black hover:bg-purple-600/30 transition">SALVAR
+                            TODOS</button>
+                    </div>
+                    <div id="multi-gen-list"
+                        class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Mass games -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARATOR PRO VIEW -->
+        <section id="view-comparator" class="content-view hidden animate-fade-in space-y-10">
+            <div class="glass-card p-10 rounded-[40px] border-l-4 border-l-emerald-500">
+                <h3 class="text-2xl font-black text-white mb-6">Comparador Pro de Acertos</h3>
+                <p class="text-sm text-slate-500 mb-8 max-w-2xl">Compare seus jogos salvos ou insira uma lista manual
+                    para verificar o desempenho contra o último resultado oficial (#<span
+                        id="comp-contest-id">----</span>).</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 space-y-6">
+                        <button onclick="loadSavedIntoComparator()"
+                            class="w-full py-4 bg-white/5 border border-white/5 rounded-2xl text-xs font-black text-purple-400 hover:bg-white/10 transition flex items-center justify-center gap-2">
+                            <i data-lucide="list"></i> CARREGAR MEUS JOGOS
+                        </button>
+                        <div class="relative">
+                            <textarea id="comp-manual-input" rows="8"
+                                placeholder="Ou cole seus jogos aqui (um por linha)..."
+                                class="w-full bg-slate-900 border border-white/10 rounded-3xl p-6 text-sm text-white font-bold outline-none focus:border-emerald-500/50 transition"></textarea>
+                        </div>
+                        <button onclick="runComparison()"
+                            class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 rounded-3xl font-black text-white transition shadow-lg shadow-emerald-500/20">ANALISAR
+                            ACERTOS</button>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-4" id="comp-results-area">
+                        <div
+                            class="h-full min-h-[300px] rounded-[32px] border-2 border-dashed border-white/5 flex flex-col items-center justify-center text-slate-600">
+                            <i data-lucide="scan" size="48" class="mb-4 opacity-20"></i>
+                            <p class="text-xs font-black uppercase tracking-widest">Aguardando Input...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORICAL TRENDS VIEW -->
+        <section id="view-trends" class="content-view hidden animate-fade-in space-y-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-8 rounded-[32px]">
+                    <h4 class="font-black text-white mb-6">Evolução da Soma (Últ. 50)</h4>
+                    <div class="h-[300px]">
+                        <canvas id="sumTrendChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-8 rounded-[32px]">
+                    <h4 class="font-black text-white mb-6">Paridade Pares (Últ. 50)</h4>
+                    <div class="h-[300px]">
+                        <canvas id="parityTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HISTORY TABLE -->
+        <section id="view-history" class="content-view hidden animate-fade-in space-y-8">
+            <div class="glass-card rounded-[32px] overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-white/5 text-[10px] font-black uppercase text-slate-500 tracking-widest">
+                        <tr>
+                            <th class="px-8 py-6">Concurso</th>
+                            <th class="px-8 py-6">Dezenas Sorteadas</th>
+                            <th class="px-8 py-6">Soma</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="text-sm">
+                        <!-- History rows -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CLOSINGS (FECHAMENTOS) -->
+        <section id="view-closings" class="content-view hidden animate-fade-in space-y-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+                <button onclick="generateEliteClosing(17)"
+                    class="glass-card p-8 rounded-[32px] hover:border-purple-500/50 transition group text-left border-l-4 border-l-purple-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition">
+                            <i data-lucide="shield" class="text-purple-400"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Premium
+                            Matrix</span>
+                    </div>
+                    <h5 class="text-2xl font-black text-white">Elite 17 dezenas</h5>
+                    <p class="text-sm text-slate-500 mt-1">Fechamento de 15 pontos para 17 dezenas selecionadas pelo
+                        algoritmo.</p>
+                </button>
+                <button onclick="generateEliteClosing(18)"
+                    class="glass-card p-8 rounded-[32px] hover:border-pink-500/50 transition group text-left border-l-4 border-l-pink-500">
+                    <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center group-hover:bg-pink-500/20 transition">
+                            <i data-lucide="shield" class="text-pink-400"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-pink-400 uppercase tracking-widest">Ultra Matrix</span>
+                    </div>
+                    <h5 class="text-2xl font-black text-white">Elite 18 dezenas</h5>
+                    <p class="text-sm text-slate-500 mt-1">Fechamento otimizado de 18 dezenas em 24 jogos de alta
+                        performance.</p>
+                </button>
+            </div>
+            <div id="closing-info" class="hidden glass-card p-6 rounded-2xl bg-white/5 border border-white/5 max-w-4xl">
+                <p class="text-xs font-bold text-slate-400" id="closing-summary">Gerando jogos...</p>
+            </div>
+            <div id="closing-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" class="fixed inset-0 bg-black z-[100] flex flex-col items-center justify-center">
+            <div class="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mb-6">
+            </div>
+            <p class="text-sm font-black text-slate-500 tracking-[0.4em] animate-pulse">BOOTING LOTOMATRIX...</p>
+        </div>
+
+        <div id="toast-container" class="fixed bottom-10 right-10 z-[200] space-y-4"></div>
+
+    </main>
+
+    <!-- LOTOMATRIX MODULAR SCRIPTS (CODE GUARD) -->
+    <script src="js/utils.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/generators.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/saved_games.js"></script>
+    <script src="js/diagnostic.js"></script>
+
+</body>
+
+</html>
