@@ -251,6 +251,11 @@ def sincronizar_desktop(total_concursos):
 
 # ─── 4. Git push ─────────────────────────────────────────────────────────────
 def git_push(total_concursos):
+    # Skip git push if running in GitHub Actions (handled by the workflow)
+    if os.getenv("GITHUB_ACTIONS"):
+        log("\n⏭️  Saindo sem Git (executando em CI)...", AMARELO)
+        return
+
     log(f"\n🚀 Fazendo push para o GitHub (concurso {total_concursos})...", CIANO)
     try:
         # Usar -f para garantir que o cache seja adicionado mesmo se estiver no gitignore por engano
